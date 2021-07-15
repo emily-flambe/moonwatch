@@ -1,1 +1,1 @@
-test_worker: python app.py
+worker: python app.py
