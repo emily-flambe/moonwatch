@@ -62,7 +62,7 @@ def scheduler():
     
     # 2. Create a scheduler
     scheduler = BackgroundScheduler(executors=executors)
-    scheduler.add_job(printStomnkPrice, 'interval', seconds=10, args=["GME"])
+    scheduler.add_job(printStomnkPrice, 'interval', hours=1, args=["GME"])
     scheduler.start()
     
     return 'Scheduled some shit.', 200
