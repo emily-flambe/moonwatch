@@ -45,7 +45,7 @@ def printStomnkPrice(ticker):
     price = soup.find('div',{'class': 'My(6px) Pos(r) smartphone_Mt(6px)'}).find('span').text
     
     # Craft a very helpful message
-    message = f'''Hello APES. (Ook ook) The current price of {ticker} is ${price}... HODL'''        
+    message = f''':gorilla: ${price} :rocket:'''        
     
     app.logger.info(message)
     post_message_to_slack(message, blocks = None)
