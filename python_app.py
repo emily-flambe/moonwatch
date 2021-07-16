@@ -155,7 +155,7 @@ def getStomnkUpdate(ticker):
 def main():
 
     scheduler = BackgroundScheduler(executors=executors)
-    scheduler.add_job(getStomnkUpdate, 'interval', seconds=10, args=["GME"])
+    scheduler.add_job(getStomnkUpdate, 'interval', seconds=600, args=["GME"])
     scheduler.start()
 
     try:
