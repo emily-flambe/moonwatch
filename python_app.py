@@ -42,21 +42,21 @@ def printStomnkPrice(ticker):
     # Craft a very helpful message
     message = f''':gorilla: ${price} :rocket:'''        
     
-    app.logger.info(message)
+    print(message)
     post_message_to_slack(message, blocks = None)
 
 
 def main():
 
     scheduler = BackgroundScheduler(executors=executors)
-    scheduler.add_job(printStomnkPrice, 'interval', minutes=5, args=["GME"])
+    scheduler.add_job(printStomnkPrice, 'interval', seconds=15, args=["GME"])
     scheduler.start()
 
     try:
         # This is here to simulate application activity (which keeps the main thread alive).
         while True:
             time.sleep(2)
-            
+
     except (KeyboardInterrupt, SystemExit):
         # Not strictly necessary if daemonic mode is enabled but should be done if possible
         scheduler.shutdown() 
