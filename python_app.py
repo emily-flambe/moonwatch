@@ -49,7 +49,7 @@ def printStomnkPrice(ticker):
 def main():
 
     scheduler = BackgroundScheduler(executors=executors)
-    scheduler.add_job(printStomnkPrice, 'interval', seconds=15, args=["GME"])
+    scheduler.add_job(printStomnkPrice, 'interval', seconds=300, args=["GME"])
     scheduler.start()
 
     try:
