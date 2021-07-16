@@ -51,13 +51,14 @@ def googleSheetAppendDataframe(new_data_df):
     '''
 
     KEYFILE = 'service_account_creds.json'
+    service_account_creds = os.getenv("SERVICE_ACCOUNT_CREDS")
     worksheet_key = os.getenv("MOONWATCH_WORKSHEET_KEY")
     sheet_index = 0
     
     # Authenticate
     try:
-        #with open(KEYFILE, "w") as secret_file:
-        #    secret_file.write(service_account_creds)
+        with open(KEYFILE, "w") as secret_file:
+            secret_file.write(service_account_creds)
         gc = gspread.service_account(filename=KEYFILE)
         print("Authentication succeeded, yaaay")
         #os.remove(KEYFILE)
