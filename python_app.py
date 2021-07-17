@@ -77,11 +77,20 @@ def getStomnkPriceDataframe(ticker):
     
     return new_data_df
 
-def createSlackMessage(new_data_df):
+def createSlackMessage(new_data_df,price_change):
     timestamp = new_data_df['Timestamp'][0]
     ticker = new_data_df['Ticker'][0]
     price = new_data_df['Price'][0]
-    message = f":rocket: ${price} :gorilla: "
+
+    if price_change>0.005:
+        message = f":rocket::rocket::rocket: ${price} :rocket::rocket::rocket:"
+    elif price_change>0:
+        message = f":rocket: ${price}"
+    elif price_change<-.005:
+        message = f":raised_hands::gem::raised_hands::gem: ${price} :raised_hands::gem::raised_hands::gem:"
+    else:
+        message = f":gorilla: ${price}"
+
     return message   
 
 def post_message_to_slack(text, blocks = None):
@@ -129,6 +138,7 @@ def updateStonkxData(ticker):
     # Compare price values in latest row vs. prior row
     previous_price = sheet_as_df.iloc[len(sheet_as_df)-2:len(sheet_as_df)-1].reset_index()['Price'][0]
     new_price = new_data_df['Price'][0]
+    price_change = new_price/previous_price-1
 
     # If price has changed, append the new number to the Google Sheet
     if new_price!=previous_price:
@@ -138,7 +148,7 @@ def updateStonkxData(ticker):
         
         #Post to Slack
         print("Updating Slack!")
-        message = createSlackMessage(new_data_df)
+        message = createSlackMessage(new_data_df,price_change)
         post_message_to_slack(message, blocks = None)
     
     # If price has not changed, nothing happens
