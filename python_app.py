@@ -140,16 +140,22 @@ def updateStonkxData(ticker):
     new_price = new_data_df['Price'][0]
     price_change = float(new_price)/float(previous_price)-1
 
+    print(f"new price: {new_price}. Old price: {previous_price}. Price change: {price_change}")
+
     # If price has changed, append the new number to the Google Sheet
     if new_price!=previous_price:
         print("Adding new data to spreadsheet")
         updated_df = sheet_as_df.append(new_data_df)
         gd.set_with_dataframe(worksheet, updated_df)
         
-        #Post to Slack
-        print("Updating Slack!")
-        message = createSlackMessage(new_data_df,price_change)
-        post_message_to_slack(message, blocks = None)
+        if checkIfTradingHours():
+            #Post to Slack
+            print("Updating Slack!")
+            message = createSlackMessage(new_data_df,price_change)
+            post_message_to_slack(message, blocks = None)
+
+        else:
+            print("Outside trading hours. Chill")
     
     # If price has not changed, nothing happens
     else:
@@ -160,7 +166,7 @@ def updateStonkxData(ticker):
 def main():
 
     scheduler = BackgroundScheduler(executors=executors)
-    scheduler.add_job(updateStonkxData, 'interval', seconds=600, args=["GME"])
+    scheduler.add_job(updateStonkxData, 'interval', seconds=60, args=["GME"])
     scheduler.start()
 
     try:
