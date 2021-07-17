@@ -141,6 +141,7 @@ def updateStonkxData(ticker):
     price_change = float(new_price)/float(previous_price)-1
 
     print(f"new price: {new_price}. Old price: {previous_price}. Price change: {price_change}")
+    print(f"Has the price changed? {new_price!=previous_price}")
 
     # If price has changed, append the new number to the Google Sheet
     if new_price!=previous_price:
@@ -148,8 +149,9 @@ def updateStonkxData(ticker):
         updated_df = sheet_as_df.append(new_data_df)
         gd.set_with_dataframe(worksheet, updated_df)
         
+
+        # Post to Slack, but only during trading hours
         if checkIfTradingHours():
-            #Post to Slack
             print("Updating Slack!")
             message = createSlackMessage(new_data_df,price_change)
             post_message_to_slack(message, blocks = None)
