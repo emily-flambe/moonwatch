@@ -160,7 +160,7 @@ def updateStonkxData(ticker):
 def main():
 
     scheduler = BackgroundScheduler(executors=executors)
-    scheduler.add_job(updateStonkxData, 'interval', seconds=10, args=["GME"])
+    scheduler.add_job(updateStonkxData, 'interval', seconds=600, args=["GME"])
     scheduler.start()
 
     try:
