@@ -6,7 +6,7 @@ import pandas as pd
 import gspread
 import gspread_dataframe as gd
 from gspread_dataframe import set_with_dataframe
-from datetime import date,datetime
+from datetime import date, datetime, timedelta
 from bs4 import BeautifulSoup
 from urllib.request import urlopen
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -153,9 +153,11 @@ def updateStonkxData(ticker):
         
 
         # Post to Slack, but only during trading hours
+        message = createSlackMessage(new_data_df,price_change)
+        print(f"Slack message: {message}")
+        
         if checkIfTradingHours():
             print("Updating Slack!")
-            message = createSlackMessage(new_data_df,price_change)
             post_message_to_slack(message, blocks = None)
 
         else:
@@ -167,10 +169,76 @@ def updateStonkxData(ticker):
 
     print("All done!")
 
+def updateDailySummaryData():
+    
+    print("Updating daily summary stats in Google Sheets")
+
+    # Get data from the worksheet
+    gc = authenticateGoogleSheets()
+    sh = gc.open_by_key(worksheet_key)
+    worksheet = sh.get_worksheet(sheet_index)
+    sheet_as_df = gd.get_as_dataframe(worksheet)
+    
+    # Calculate daily summary stats for each ticker
+    # Max
+    max_prices = pd.DataFrame(sheet_as_df.groupby('Date').max()[['Ticker','Price']])
+    max_prices = max_prices.rename(columns={"Price":"Max"})
+    
+    # Min
+    min_prices = pd.DataFrame(sheet_as_df.groupby('Date').min()[['Ticker','Price']])
+    min_prices = min_prices.rename(columns={"Price":"Min"})
+    
+    # Avg
+    avg_prices = pd.DataFrame(sheet_as_df.groupby(['Date','Ticker']).mean())
+    avg_prices = avg_prices.rename(columns={"Price":"Average"})
+    
+    # Stdev
+    stdev_prices = pd.DataFrame(sheet_as_df.groupby(['Date','Ticker']).std())
+    stdev_prices = stdev_prices.rename(columns={"Price":"Stdev"})
+    
+    # Calculate prior day stats for each date + ticker
+    # Max
+    prior_day_maxes = pd.DataFrame(max_prices).reset_index()    
+    prior_day_maxes['Date'] = [(datetime.strptime(x, '%m/%d/%Y')+timedelta(days=1)).strftime('%-m/%d/%Y') for x in prior_day_maxes['Date']]
+    prior_day_maxes = prior_day_maxes.rename(columns={"Max":"Prior Day Max"})
+    
+    # Min
+    prior_day_mins = pd.DataFrame(min_prices).reset_index()    
+    prior_day_mins['Date'] = [(datetime.strptime(x, '%m/%d/%Y')+timedelta(days=1)).strftime('%-m/%d/%Y') for x in prior_day_mins['Date']]
+    prior_day_mins = prior_day_mins.rename(columns={"Min":"Prior Day Min"})
+    
+    # Avg
+    prior_day_avgs = pd.DataFrame(avg_prices).reset_index()    
+    prior_day_avgs['Date'] = [(datetime.strptime(x, '%m/%d/%Y')+timedelta(days=1)).strftime('%-m/%d/%Y') for x in prior_day_avgs['Date']]
+    prior_day_avgs = prior_day_avgs.rename(columns={"Average":"Prior Day Avg"})
+    
+    # Stdev
+    prior_day_stds = pd.DataFrame(stdev_prices).reset_index()    
+    prior_day_stds['Date'] = [(datetime.strptime(x, '%m/%d/%Y')+timedelta(days=1)).strftime('%-m/%d/%Y') for x in prior_day_stds['Date']]
+    prior_day_stds = prior_day_stds.rename(columns={"Stdev":"Prior Day Stdev"})
+    
+    # Do a bunch of merges to construct the daily summary dataframe
+    daily_summary_df = max_prices.merge(min_prices,how='inner',on=['Date','Ticker'])
+    daily_summary_df = daily_summary_df.merge(avg_prices,how='inner',on=['Date','Ticker'])
+    daily_summary_df = daily_summary_df.merge(stdev_prices,how='inner',on=['Date','Ticker'])
+    daily_summary_df = daily_summary_df.merge(prior_day_maxes,how='inner',on=['Date','Ticker'])
+    daily_summary_df = daily_summary_df.merge(prior_day_mins,how='inner',on=['Date','Ticker'])
+    daily_summary_df = daily_summary_df.merge(prior_day_avgs,how='inner',on=['Date','Ticker'])
+    daily_summary_df = daily_summary_df.merge(prior_day_stds,how='inner',on=['Date','Ticker'])
+    
+    # Overwrite daily summary table in Google Sheets with new dataframe
+    daily_summary_worksheet = sh.get_worksheet(1)
+    gd.set_with_dataframe(daily_summary_worksheet, daily_summary_df)
+
+    print("Successfully updated summary stats in Google Sheets, yay, wow, congrats")
+
+    #TODO(): message helpful summary info to Slack (helpful!!!)
+
 def main():
 
     scheduler = BackgroundScheduler(executors=executors)
     scheduler.add_job(updateStonkxData, 'interval', seconds=15, args=["GME"])
+    scheduler.add_job(updateDailySummaryData, 'interval', seconds=15, args=None)
     scheduler.start()
 
     try:
