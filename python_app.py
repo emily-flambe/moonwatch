@@ -1,9 +1,7 @@
 import os
 import json
 import time
-import bs4
 import requests
-import logging
 import pandas as pd
 import gspread
 import gspread_dataframe as gd
@@ -28,6 +26,7 @@ sheet_index = 0
 
 def authenticateGoogleSheets():
     '''
+    Authenticates GCP Service account using credentials JSON stored in environment variable
     Returns gc object
     '''
 
@@ -45,6 +44,11 @@ def authenticateGoogleSheets():
     return gc
 
 def checkIfTradingHours():
+    '''
+    Returns a boolean indicating whether current time is within normal stonk trading hours.
+    Not currently being used anywhere but could be useful in the future, so keeping for now
+    '''
+
     current_time = datetime.now()
     weekday = datetime.today().strftime('%A')
     
@@ -80,26 +84,6 @@ def createSlackMessage(new_data_df):
     message = f":rocket: ${price} :gorilla: "
     return message   
 
-def googleSheetAppendDataframe(new_data_df):
-    '''
-    Returns Google Sheets `worksheet` object
-    '''
-    
-    # Authenticate
-    gc = authenticateGoogleSheets()
-        
-    # Open the worksheet
-    sh = gc.open_by_key(worksheet_key)
-    worksheet = sh.get_worksheet(sheet_index)
-    
-    # Append new data to the Google Sheet
-    existing = gd.get_as_dataframe(worksheet)
-    updated = existing.append(new_data_df)
-    gd.set_with_dataframe(worksheet, updated)
-    
-    print("Google Sheet updated! In theory, anyway")
-
-
 def post_message_to_slack(text, blocks = None):
     
     slack_token = os.getenv('SLACK_TOKEN')
@@ -115,15 +99,25 @@ def post_message_to_slack(text, blocks = None):
         'username': slack_user_name,
         'blocks': json.dumps(blocks) if blocks else None
     }).json() 
-
-def checkIfPriceUpdated(ticker):
+  
+def updateStonkxData(ticker):
     '''
-    Returns boolean: TRUE if the price has changed, FALSE if it is the same as last time it was scraped
+    This is the main code that runs every 10 minutes.
+    1) Scrape current stock price from Yahoo! finance
+    2) Check to see whether it's changed from the last scrape
+    3a) If price has changed, write a new row to the Google Sheet and send a message to Slack
+    3b) If price is same, do nothing
     '''
+    
+    # Get df with updated stonk data
+    new_data_df = getStomnkPriceDataframe(ticker)
+    
+    # We will only add this to the Google Sheet if the price has changed. 
+    # Fetch data from the existing sheet and compare our new dataframe with the most recent row in the Gsheet
     
     # Authenticate
     gc = authenticateGoogleSheets()
-        
+    
     # Load the worksheet as a dataframe
     sh = gc.open_by_key(worksheet_key)
     worksheet = sh.get_worksheet(sheet_index)
@@ -131,46 +125,32 @@ def checkIfPriceUpdated(ticker):
     
     # Filter to rows for specific ticker
     sheet_as_df = sheet_as_df[sheet_as_df['Ticker']==ticker]
-    
+
     # Compare price values in latest row vs. prior row
     previous_price = sheet_as_df.iloc[len(sheet_as_df)-2:len(sheet_as_df)-1].reset_index()['Price'][0]
-    new_price = sheet_as_df.iloc[len(sheet_as_df)-1:len(sheet_as_df)].reset_index()['Price'][0]
-    
-    # Return boolean comparing previous to latest price (TRU)
-    return previous_price != new_price    
+    new_price = new_data_df['Price'][0]
 
-def getStomnkUpdate(ticker):
-    
-    # Get fresh data for the ticker
-    new_data_df = getStomnkPriceDataframe(ticker)
-    
-    # Append data to the Google Sheet
-    googleSheetAppendDataframe(new_data_df)
-    
-    # If the price has changed since last scraped, post a message to Slack
-
-    if checkIfPriceUpdated(ticker):
-        # Craft a very helpful message
+    # If price has changed, append the new number to the Google Sheet
+    if new_price!=previous_price:
+        print("Adding new data to spreadsheet")
+        updated_df = sheet_as_df.append(new_data_df)
+        gd.set_with_dataframe(worksheet, updated_df)
+        
+        #Post to Slack
+        print("Updating Slack!")
         message = createSlackMessage(new_data_df)
-        print("Price is updated! Blessings abound")
-    
-    else:
-        message = "HODL :gem: :raised_hands:"
-        print("Price has not changed - HODL")
-
-    # Post the message to Slack (but only during trading hours)
-    if checkIfTradingHours():
-        print("Posting update to slack, wow")
         post_message_to_slack(message, blocks = None)
+    
+    # If price has not changed, nothing happens
     else:
-        print("We are outside of trading hours. Give it a rest y'all")
+        print("Price has not changed - HODL")
 
     print("All done!")
 
 def main():
 
     scheduler = BackgroundScheduler(executors=executors)
-    scheduler.add_job(getStomnkUpdate, 'interval', seconds=600, args=["GME"])
+    scheduler.add_job(updateStonkxData, 'interval', seconds=600, args=["GME"])
     scheduler.start()
 
     try:
@@ -179,7 +159,6 @@ def main():
             time.sleep(2)
 
     except (KeyboardInterrupt, SystemExit):
-        # Not strictly necessary if daemonic mode is enabled but should be done if possible
         scheduler.shutdown() 
 
 if __name__ == "__main__":
