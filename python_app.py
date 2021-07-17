@@ -136,7 +136,7 @@ def updateStonkxData(ticker):
     sheet_as_df = sheet_as_df[sheet_as_df['Ticker']==ticker]
 
     # Compare price values in latest row vs. prior row
-    previous_price = sheet_as_df.iloc[len(sheet_as_df)-2:len(sheet_as_df)-1].reset_index()['Price'][0]
+    previous_price = sheet_as_df.iloc[len(sheet_as_df)-1:len(sheet_as_df)].reset_index()['Price'][0]
     previous_price = float(previous_price)
     new_price = new_data_df['Price'][0]
     new_price = float(new_price)
@@ -170,7 +170,7 @@ def updateStonkxData(ticker):
 def main():
 
     scheduler = BackgroundScheduler(executors=executors)
-    scheduler.add_job(updateStonkxData, 'interval', seconds=600, args=["GME"])
+    scheduler.add_job(updateStonkxData, 'interval', seconds=15, args=["GME"])
     scheduler.start()
 
     try:
