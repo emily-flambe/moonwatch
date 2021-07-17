@@ -44,6 +44,17 @@ def authenticateGoogleSheets():
 
     return gc
 
+def checkIfTradingHours():
+    current_time = datetime.now()
+    weekday = datetime.today().strftime('%A')
+    
+    if weekday=='Saturday' or weekday=='Sunday':
+        return False
+    elif current_time>time(16,0) or current_time<time(8,30):
+        return False
+    else:
+        return True
+
 def getStomnkPriceDataframe(ticker):
     
     # Get current price of stomnk
@@ -147,10 +158,14 @@ def getStomnkUpdate(ticker):
         message = "HODL :gem: :raised_hands:"
         print("Price has not changed - HODL")
 
-    # Post the message to Slack
-    post_message_to_slack(message, blocks = None)
-    print("All done!")
+    # Post the message to Slack (but only during trading hours)
+    if checkIfTradingHours():
+        print("Posting update to slack, wow")
+        post_message_to_slack(message, blocks = None)
+    else:
+        print("We are outside of trading hours. Give it a rest y'all")
 
+    print("All done!")
 
 def main():
 
