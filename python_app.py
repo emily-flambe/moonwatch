@@ -138,7 +138,7 @@ def updateStonkxData(ticker):
     # Compare price values in latest row vs. prior row
     previous_price = sheet_as_df.iloc[len(sheet_as_df)-2:len(sheet_as_df)-1].reset_index()['Price'][0]
     new_price = new_data_df['Price'][0]
-    price_change = new_price/previous_price-1
+    price_change = float(new_price)/float(previous_price)-1
 
     # If price has changed, append the new number to the Google Sheet
     if new_price!=previous_price:
