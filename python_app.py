@@ -137,14 +137,16 @@ def updateStonkxData(ticker):
 
     # Compare price values in latest row vs. prior row
     previous_price = sheet_as_df.iloc[len(sheet_as_df)-2:len(sheet_as_df)-1].reset_index()['Price'][0]
+    previous_price = float(previous_price)
     new_price = new_data_df['Price'][0]
-    price_change = float(new_price)/float(previous_price)-1
+    new_price = float(new_price)
+    price_change = new_price/previous_price-1
 
     print(f"new price: {new_price}. Old price: {previous_price}. Price change: {price_change}")
     print(f"Has the price changed? {new_price!=previous_price}")
 
     # If price has changed, append the new number to the Google Sheet
-    if new_price!=previous_price:
+    if float(new_price)!=previous_price:
         print("Adding new data to spreadsheet")
         updated_df = sheet_as_df.append(new_data_df)
         gd.set_with_dataframe(worksheet, updated_df)
