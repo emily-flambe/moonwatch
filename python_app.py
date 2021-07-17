@@ -11,6 +11,7 @@ from bs4 import BeautifulSoup
 from urllib.request import urlopen
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.executors.pool import ThreadPoolExecutor
+from apscheduler.triggers.cron import CronTrigger
     
 # 1. Define the actuator
 executors = {
@@ -237,8 +238,8 @@ def updateDailySummaryData():
 def main():
 
     scheduler = BackgroundScheduler(executors=executors)
-    scheduler.add_job(updateStonkxData, 'interval', seconds=15, args=["GME"])
-    scheduler.add_job(updateDailySummaryData, 'interval', seconds=15, args=None)
+    scheduler.add_job(updateStonkxData, 'interval', seconds=600, args=["GME"])
+    scheduler.add_job(updateDailySummaryData, CronTrigger.from_crontab('0 22 * * *'), args=None)
     scheduler.start()
 
     try:
