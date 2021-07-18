@@ -238,12 +238,12 @@ def updateDailySummaryData():
     # Prior Day Open prices
     prior_day_open_prices = pd.DataFrame(open_prices).reset_index()    
     prior_day_open_prices['Date'] = [(datetime.strptime(x, '%m/%d/%Y')+timedelta(days=1)).strftime('%-m/%d/%Y') for x in prior_day_open_prices['Date']]
-    prior_day_open_prices = prior_day_open_prices.rename(columns={"Stdev":"Prior Day Opening Price"})
+    prior_day_open_prices = prior_day_open_prices.rename(columns={"Opening Price":"Prior Day Opening Price"})
 
     # Prior Day Closing prices
     prior_day_closing_prices = pd.DataFrame(closing_prices).reset_index()    
     prior_day_closing_prices['Date'] = [(datetime.strptime(x, '%m/%d/%Y')+timedelta(days=1)).strftime('%-m/%d/%Y') for x in prior_day_open_prices['Date']]
-    prior_day_closing_prices = prior_day_open_prices.rename(columns={"Stdev":"Prior Day Closing Price"})
+    prior_day_closing_prices = prior_day_open_prices.rename(columns={"Closing Price":"Prior Day Closing Price"})
     
     # Do a bunch of merges to construct the daily summary dataframe
     daily_summary_df = max_prices.merge(min_prices,how='inner',on=['Date','Ticker'])
