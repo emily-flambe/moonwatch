@@ -44,6 +44,16 @@ def authenticateGoogleSheets():
 
     return gc
 
+def loadGoogleSheetAsDF(worksheet_key, sheet_index):
+    
+    # Get data from the worksheet
+    gc = authenticateGoogleSheets()
+    sh = gc.open_by_key(worksheet_key)
+    worksheet = sh.get_worksheet(sheet_index)
+    sheet_as_df = gd.get_as_dataframe(worksheet)
+    
+    return sheet_as_df
+
 def checkIfTradingHours():
     '''
     Returns a boolean indicating whether current time is within normal stonk trading hours.
@@ -125,13 +135,8 @@ def updateStonkxData(ticker):
     # We will only add this to the Google Sheet if the price has changed. 
     # Fetch data from the existing sheet and compare our new dataframe with the most recent row in the Gsheet
     
-    # Authenticate
-    gc = authenticateGoogleSheets()
-    
     # Load the worksheet as a dataframe
-    sh = gc.open_by_key(worksheet_key)
-    worksheet = sh.get_worksheet(sheet_index)
-    sheet_as_df = gd.get_as_dataframe(worksheet).sort_values(by=['Timestamp'])
+    sheet_as_df = loadGoogleSheetAsDF(worksheet_key, sheet_index).sort_values(by=['Timestamp'])
     
     # Filter to rows for specific ticker
     sheet_as_df = sheet_as_df[sheet_as_df['Ticker']==ticker]
