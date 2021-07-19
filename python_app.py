@@ -1,6 +1,6 @@
 import os
 import json
-import time
+import time as t
 import requests
 import pandas as pd
 import gspread
@@ -57,7 +57,7 @@ def checkIfTradingHours():
     Returns a boolean indicating whether current time is within normal stonk trading hours.
     Not currently being used anywhere but could be useful in the future, so keeping for now
     '''
-    
+
     current_time = datetime.now().time()
     market_open_time = datetime(2021, 1, 1, 8, 30, 0).time()
     market_close_time = datetime(2021, 1, 1, 16, 0, 0).time()
@@ -313,7 +313,7 @@ def main():
     try:
         # This is here to simulate application activity (which keeps the main thread alive).
         while True:
-            time.sleep(2)
+            t.sleep(2)
 
     except (KeyboardInterrupt, SystemExit):
         scheduler.shutdown() 
