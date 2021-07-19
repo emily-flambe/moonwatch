@@ -357,7 +357,7 @@ def main():
     #scheduler.add_job(updateStonkxData, 'interval', seconds=1800, args=["GME"])
     scheduler.add_job(updateStonkxData, CronTrigger.from_crontab('*/30 * * * *'), args=["GME"])
     scheduler.add_job(updateDailySummaryData, 'interval', seconds=600, args=None)
-    scheduler.add_job(updateHistoricalData, 'interval', seconds=60, args=["GME"])
+    scheduler.add_job(updateHistoricalData, CronTrigger.from_crontab('0 22 * * *'), args=["GME"])
     #scheduler.add_job(updateDailySummaryData, CronTrigger.from_crontab('0 22 * * *'), args=None)
     scheduler.start()
 
