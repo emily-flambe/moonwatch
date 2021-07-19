@@ -259,12 +259,17 @@ def updateDailySummaryData():
     daily_summary_df = daily_summary_df.merge(prior_day_closing_prices,how='inner',on=['Date','Ticker'])
     
     # Overwrite daily summary table in Google Sheets with new dataframe
-    daily_summary_worksheet = sh.get_worksheet(1)
-    gd.set_with_dataframe(daily_summary_worksheet, daily_summary_df)
-
-    print("Successfully updated summary stats in Google Sheets, yay, wow, congrats")
-
-    #TODO(): message helpful summary info to Slack (helpful!!!)
+    print("Daily summary dataframe created. Attempting to update Google Sheets...")
+    try:
+        summary_sheet_index = 1
+        gc = authenticateGoogleSheets()
+        sh = gc.open_by_key(worksheet_key)
+        daily_summary_worksheet = sh.get_worksheet(summary_sheet_index)
+        gd.set_with_dataframe(daily_summary_worksheet, daily_summary_df)
+        print("Successfully updated Google Sheets with enfreshened summary stats")
+    
+    except:
+        print("Failed to update Google Sheets :( :( :(")
 
 def main():
 
