@@ -21,7 +21,6 @@ executors = {
 KEYFILE = 'service_account_creds.json'
 service_account_creds = os.getenv("SERVICE_ACCOUNT_CREDS")
 worksheet_key = os.getenv("MOONWATCH_WORKSHEET_KEY")
-sheet_index = 0
 
 # Functions setup
 
@@ -36,7 +35,6 @@ def authenticateGoogleSheets():
         with open(KEYFILE, "w") as secret_file:
             secret_file.write(service_account_creds)
         gc = gspread.service_account(filename=KEYFILE)
-        print("Authentication succeeded, yaaay")
         os.remove(KEYFILE)
 
     except:
@@ -136,6 +134,7 @@ def updateStonkxData(ticker):
     # Fetch data from the existing sheet and compare our new dataframe with the most recent row in the Gsheet
     
     # Load the worksheet as a dataframe
+    sheet_index = 0
     sheet_as_df = loadGoogleSheetAsDF(worksheet_key, sheet_index).sort_values(by=['Timestamp'])
     
     # Filter to rows for specific ticker
@@ -176,14 +175,15 @@ def updateStonkxData(ticker):
     print("All done!")
 
 def updateDailySummaryData():
+    '''
+    Update the daily summary stats in the google sheet (one row per date + ticker)
+    '''
     
     print("Updating daily summary stats in Google Sheets")
     
-    # Get data from the worksheet
-    gc = authenticateGoogleSheets()
-    sh = gc.open_by_key(worksheet_key)
-    worksheet = sh.get_worksheet(sheet_index)
-    sheet_as_df = gd.get_as_dataframe(worksheet)
+    # Get data from the Google Sheet
+    sheet_index = 0
+    sheet_as_df = loadGoogleSheetAsDF(worksheet_key, sheet_index)
     
     # Calculate daily summary stats for each ticker
     # Max
