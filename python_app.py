@@ -307,11 +307,49 @@ def updateDailySummaryData():
     except:
         print("Failed to update Google Sheets :( :( :(")
 
+def updateHistoricalData(ticker):
+    '''
+    Update Google sheets tab containing historical data for {ticker}
+    TODO(): refactor to process a list of tickers instead of just one
+    '''
+    
+    print(f"Updating historical data for {ticker}...")
+    url = "https://apidojo-yahoo-finance-v1.p.rapidapi.com/stock/v3/get-historical-data"
+    
+    querystring = {"symbol":ticker,"region":"US"}
+    
+    headers = {
+            'x-rapidapi-key': os.environ['RAPIDAPI_KEY'],
+            'x-rapidapi-host': os.environ['RAPIDAPI_HOST']
+        }
+    
+    response = requests.request("GET", url, headers=headers, params=querystring)
+
+    historical_data_json = json.loads(response.text)
+    
+    # call API to fetch historical data
+    historical_data_df = pd.DataFrame(historical_data_json['prices'])
+    
+    historical_data_df = historical_data_df.rename(columns={"date":"timestamp_epoch"})
+    
+    historical_data_df['Date'] = [convertEpochToTimestamp(x) for x in historical_data_df['timestamp_epoch']]
+    historical_data_df['Ticker'] = ticker
+    
+    # update the Google Sheets worksheet
+    sheet_index=2
+    gc = authenticateGoogleSheets()
+    sh = gc.open_by_key(worksheet_key)
+    historical_data_worksheet = sh.get_worksheet(sheet_index)
+    gd.set_with_dataframe(historical_data_worksheet, historical_data_df)
+    
+    print(f"Historical data for {ticker} updated successfully")
+
 def main():
 
     scheduler = BackgroundScheduler(executors=executors)
     scheduler.add_job(updateStonkxData, 'interval', seconds=1800, args=["GME"])
     scheduler.add_job(updateDailySummaryData, 'interval', seconds=600, args=None)
+    scheduler.add_job(updateHistoricalData, 'interval', seconds=60, args=["GME"])
     #scheduler.add_job(updateDailySummaryData, CronTrigger.from_crontab('0 22 * * *'), args=None)
     scheduler.start()
 
