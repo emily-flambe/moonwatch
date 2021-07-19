@@ -27,7 +27,7 @@ worksheet_key = os.getenv("MOONWATCH_WORKSHEET_KEY")
 def convertEpochToDate(epoch):
     #timestamp_format = "%Y-%m-%d %H:%m:%S"
     date_format = "%Y-%m-%d"
-    created_at_datetime = datetime.datetime.fromtimestamp(epoch)
+    created_at_datetime = datetime.fromtimestamp(epoch)
     created_at_date = created_at_datetime.strftime(date_format)
     return created_at_date
 
