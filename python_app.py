@@ -6,7 +6,7 @@ import pandas as pd
 import gspread
 import gspread_dataframe as gd
 from gspread_dataframe import set_with_dataframe
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, time
 from bs4 import BeautifulSoup
 from urllib.request import urlopen
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -57,13 +57,15 @@ def checkIfTradingHours():
     Returns a boolean indicating whether current time is within normal stonk trading hours.
     Not currently being used anywhere but could be useful in the future, so keeping for now
     '''
-
-    current_time = datetime.now()
-    weekday = datetime.today().strftime('%A')
     
+    current_time = datetime.now().time()
+    market_open_time = datetime(2021, 1, 1, 8, 30, 0).time()
+    market_close_time = datetime(2021, 1, 1, 16, 0, 0).time()
+    
+    weekday = datetime.today().strftime('%A')
     if weekday=='Saturday' or weekday=='Sunday':
         return False
-    elif current_time>time(16,0) or current_time<time(8,30):
+    elif current_time>market_close_time or current_time<market_open_time:
         return False
     else:
         return True
