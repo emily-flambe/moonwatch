@@ -190,8 +190,14 @@ def updateStonkxData(ticker):
         if float(new_price)!=previous_price:
             print("Adding new data to spreadsheet")
             updated_df = sheet_as_df.append(new_data_df)
-            gd.set_with_dataframe(worksheet, updated_df)
 
+            # get worksheet object
+            gc = authenticateGoogleSheets()
+            sh = gc.open_by_key(worksheet_key)
+            worksheet = sh.get_worksheet(sheet_index)
+            
+            # update worksheet with updated dataframe
+            gd.set_with_dataframe(worksheet, updated_df)
 
             # Post to Slack, but only during trading hours
             message = createSlackMessage(new_data_df,price_change)
