@@ -183,68 +183,68 @@ def updateDailySummaryData():
     
     # Get data from the Google Sheet
     sheet_index = 0
-    sheet_as_df = loadGoogleSheetAsDF(worksheet_key, sheet_index)
+    price_data_df = loadGoogleSheetAsDF(worksheet_key, sheet_index)
     
     # Calculate daily summary stats for each ticker
     # Max
-    max_prices = pd.DataFrame(sheet_as_df.groupby('Date').max()[['Ticker','Price']])
-    max_prices = max_prices.rename(columns={"Price":"Max"})
+    max_prices = pd.DataFrame(price_data_df.groupby('Date').max()[['Ticker','Price']])
+    max_prices = max_prices.rename(columns={"Price":"Max"}).reset_index()
     
     # Min
-    min_prices = pd.DataFrame(sheet_as_df.groupby('Date').min()[['Ticker','Price']])
-    min_prices = min_prices.rename(columns={"Price":"Min"})
+    min_prices = pd.DataFrame(price_data_df.groupby('Date').min()[['Ticker','Price']])
+    min_prices = min_prices.rename(columns={"Price":"Min"}).reset_index()
     
     # Avg
-    avg_prices = pd.DataFrame(sheet_as_df.groupby(['Date','Ticker']).mean())
-    avg_prices = avg_prices.rename(columns={"Price":"Average"})
+    avg_prices = pd.DataFrame(price_data_df.groupby(['Date','Ticker']).mean())
+    avg_prices = avg_prices.rename(columns={"Price":"Average"}).reset_index()
     
     # Stdev
-    stdev_prices = pd.DataFrame(sheet_as_df.groupby(['Date','Ticker']).std())
-    stdev_prices = stdev_prices.rename(columns={"Price":"Stdev"})
+    stdev_prices = pd.DataFrame(price_data_df.groupby(['Date','Ticker']).std())
+    stdev_prices = stdev_prices.rename(columns={"Price":"Stdev"}).reset_index()
     
     # Open & closing prices
     # Get market open and closing prices for each date + ticker
-    rownums_ascending = sheet_as_df.groupby(['Date','Ticker']).cumcount()
-    sheet_as_df['rownum_ascending'] = [x for x in rownums_ascending]
-    sheet_as_df = sheet_as_df.sort_values(['Date','Ticker','Timestamp'],ascending=False)
-    rownums_descending = sheet_as_df.groupby(['Date','Ticker']).cumcount()
-    sheet_as_df['rownum_descending'] = [x for x in rownums_descending]
-    open_prices = sheet_as_df[sheet_as_df['rownum_ascending']==0][['Date','Ticker','Price']]
+    rownums_ascending = price_data_df.groupby(['Date','Ticker']).cumcount()
+    price_data_df['rownum_ascending'] = [x for x in rownums_ascending]
+    price_data_df = price_data_df.sort_values(['Date','Ticker','Timestamp'],ascending=False)
+    rownums_descending = price_data_df.groupby(['Date','Ticker']).cumcount()
+    price_data_df['rownum_descending'] = [x for x in rownums_descending]
+    open_prices = price_data_df[price_data_df['rownum_ascending']==0][['Date','Ticker','Price']]
     open_prices = open_prices.rename(columns={"Price":"Opening Price"})
-    closing_prices = sheet_as_df[sheet_as_df['rownum_descending']==0][['Date','Ticker','Price']]
+    closing_prices = price_data_df[price_data_df['rownum_descending']==0][['Date','Ticker','Price']]
     closing_prices = closing_prices.rename(columns={"Price":"Closing Price"})
     
     # Calculate prior day stats for each date + ticker
     # Prior Day Max
-    prior_day_maxes = pd.DataFrame(max_prices).reset_index()    
+    prior_day_maxes = max_prices.copy()
     prior_day_maxes['Date'] = [(datetime.strptime(x, '%m/%d/%Y')+timedelta(days=1)).strftime('%-m/%d/%Y') for x in prior_day_maxes['Date']]
     prior_day_maxes = prior_day_maxes.rename(columns={"Max":"Prior Day Max"})
     
     # Prior Day Min
-    prior_day_mins = pd.DataFrame(min_prices).reset_index()    
+    prior_day_mins = min_prices.copy()
     prior_day_mins['Date'] = [(datetime.strptime(x, '%m/%d/%Y')+timedelta(days=1)).strftime('%-m/%d/%Y') for x in prior_day_mins['Date']]
     prior_day_mins = prior_day_mins.rename(columns={"Min":"Prior Day Min"})
     
     # Prior Day Avg
-    prior_day_avgs = pd.DataFrame(avg_prices).reset_index()    
+    prior_day_avgs = avg_prices.copy()
     prior_day_avgs['Date'] = [(datetime.strptime(x, '%m/%d/%Y')+timedelta(days=1)).strftime('%-m/%d/%Y') for x in prior_day_avgs['Date']]
     prior_day_avgs = prior_day_avgs.rename(columns={"Average":"Prior Day Avg"})
     
     # Prior Day Stdev
-    prior_day_stds = pd.DataFrame(stdev_prices).reset_index()    
+    prior_day_stds = stdev_prices.copy()
     prior_day_stds['Date'] = [(datetime.strptime(x, '%m/%d/%Y')+timedelta(days=1)).strftime('%-m/%d/%Y') for x in prior_day_stds['Date']]
     prior_day_stds = prior_day_stds.rename(columns={"Stdev":"Prior Day Stdev"})
     
     # Prior Day Open prices
-    prior_day_open_prices = pd.DataFrame(open_prices)
+    prior_day_open_prices = open_prices.copy()
     prior_day_open_prices['Date'] = [(datetime.strptime(x, '%m/%d/%Y')+timedelta(days=1)).strftime('%-m/%d/%Y') for x in prior_day_open_prices['Date']]
     prior_day_open_prices = prior_day_open_prices.rename(columns={"Opening Price":"Prior Day Opening Price"})
-
+    
     # Prior Day Closing prices
-    prior_day_closing_prices = pd.DataFrame(closing_prices)
+    prior_day_closing_prices = closing_prices.copy()
     prior_day_closing_prices['Date'] = [(datetime.strptime(x, '%m/%d/%Y')+timedelta(days=1)).strftime('%-m/%d/%Y') for x in prior_day_closing_prices['Date']]
     prior_day_closing_prices = prior_day_closing_prices.rename(columns={"Closing Price":"Prior Day Closing Price"})
-
+    
     # Do a bunch of merges to construct the daily summary dataframe
     daily_summary_df = max_prices.merge(min_prices,how='inner',on=['Date','Ticker'])
     daily_summary_df = daily_summary_df.merge(avg_prices,how='inner',on=['Date','Ticker'])
@@ -275,6 +275,7 @@ def main():
 
     scheduler = BackgroundScheduler(executors=executors)
     scheduler.add_job(updateStonkxData, 'interval', seconds=600, args=["GME"])
+    time.sleep(30) #offset the schedulers by 30 seconds
     scheduler.add_job(updateDailySummaryData, 'interval', seconds=600, args=None)
     #scheduler.add_job(updateDailySummaryData, CronTrigger.from_crontab('0 22 * * *'), args=None)
     scheduler.start()
