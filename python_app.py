@@ -236,27 +236,27 @@ def updateDailySummaryData():
     prior_day_stds = prior_day_stds.rename(columns={"Stdev":"Prior Day Stdev"})
     
     # Prior Day Open prices
-    prior_day_open_prices = pd.DataFrame(open_prices).reset_index()    
+    prior_day_open_prices = pd.DataFrame(open_prices)
     prior_day_open_prices['Date'] = [(datetime.strptime(x, '%m/%d/%Y')+timedelta(days=1)).strftime('%-m/%d/%Y') for x in prior_day_open_prices['Date']]
     prior_day_open_prices = prior_day_open_prices.rename(columns={"Opening Price":"Prior Day Opening Price"})
 
     # Prior Day Closing prices
-    prior_day_closing_prices = pd.DataFrame(closing_prices).reset_index()    
-    prior_day_closing_prices['Date'] = [(datetime.strptime(x, '%m/%d/%Y')+timedelta(days=1)).strftime('%-m/%d/%Y') for x in prior_day_open_prices['Date']]
+    prior_day_closing_prices = pd.DataFrame(closing_prices)
+    prior_day_closing_prices['Date'] = [(datetime.strptime(x, '%m/%d/%Y')+timedelta(days=1)).strftime('%-m/%d/%Y') for x in prior_day_closing_prices['Date']]
     prior_day_closing_prices = prior_day_closing_prices.rename(columns={"Closing Price":"Prior Day Closing Price"})
-    
+
     # Do a bunch of merges to construct the daily summary dataframe
     daily_summary_df = max_prices.merge(min_prices,how='inner',on=['Date','Ticker'])
     daily_summary_df = daily_summary_df.merge(avg_prices,how='inner',on=['Date','Ticker'])
     daily_summary_df = daily_summary_df.merge(stdev_prices,how='inner',on=['Date','Ticker'])
-    #daily_summary_df = daily_summary_df.merge(open_prices,how='inner',on=['Date','Ticker'])
-    #daily_summary_df = daily_summary_df.merge(closing_prices,how='inner',on=['Date','Ticker'])
+    daily_summary_df = daily_summary_df.merge(open_prices,how='inner',on=['Date','Ticker'])
+    daily_summary_df = daily_summary_df.merge(closing_prices,how='inner',on=['Date','Ticker'])
     daily_summary_df = daily_summary_df.merge(prior_day_maxes,how='inner',on=['Date','Ticker'])
     daily_summary_df = daily_summary_df.merge(prior_day_mins,how='inner',on=['Date','Ticker'])
     daily_summary_df = daily_summary_df.merge(prior_day_avgs,how='inner',on=['Date','Ticker'])
     daily_summary_df = daily_summary_df.merge(prior_day_stds,how='inner',on=['Date','Ticker'])
-    #daily_summary_df = daily_summary_df.merge(prior_day_open_prices,how='inner',on=['Date','Ticker'])
-    #daily_summary_df = daily_summary_df.merge(prior_day_closing_prices,how='inner',on=['Date','Ticker'])
+    daily_summary_df = daily_summary_df.merge(prior_day_open_prices,how='inner',on=['Date','Ticker'])
+    daily_summary_df = daily_summary_df.merge(prior_day_closing_prices,how='inner',on=['Date','Ticker'])
     
     # Overwrite daily summary table in Google Sheets with new dataframe
     daily_summary_worksheet = sh.get_worksheet(1)
