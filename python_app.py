@@ -24,6 +24,13 @@ worksheet_key = os.getenv("MOONWATCH_WORKSHEET_KEY")
 
 # Functions setup
 
+def convertEpochToDate(epoch):
+    #timestamp_format = "%Y-%m-%d %H:%m:%S"
+    date_format = "%Y-%m-%d"
+    created_at_datetime = datetime.datetime.fromtimestamp(epoch)
+    created_at_date = created_at_datetime.strftime(date_format)
+    return created_at_date
+
 def authenticateGoogleSheets():
     '''
     Authenticates GCP Service account using credentials JSON stored in environment variable
@@ -332,7 +339,7 @@ def updateHistoricalData(ticker):
     
     historical_data_df = historical_data_df.rename(columns={"date":"timestamp_epoch"})
     
-    historical_data_df['Date'] = [convertEpochToTimestamp(x) for x in historical_data_df['timestamp_epoch']]
+    historical_data_df['Date'] = [convertEpochToDate(x) for x in historical_data_df['timestamp_epoch']]
     historical_data_df['Ticker'] = ticker
     
     # update the Google Sheets worksheet
@@ -347,7 +354,8 @@ def updateHistoricalData(ticker):
 def main():
 
     scheduler = BackgroundScheduler(executors=executors)
-    scheduler.add_job(updateStonkxData, 'interval', seconds=1800, args=["GME"])
+    #scheduler.add_job(updateStonkxData, 'interval', seconds=1800, args=["GME"])
+    scheduler.add_job(updateStonkxData, CronTrigger.from_crontab('*/30 * * * *'), args=None)
     scheduler.add_job(updateDailySummaryData, 'interval', seconds=600, args=None)
     scheduler.add_job(updateHistoricalData, 'interval', seconds=60, args=["GME"])
     #scheduler.add_job(updateDailySummaryData, CronTrigger.from_crontab('0 22 * * *'), args=None)
