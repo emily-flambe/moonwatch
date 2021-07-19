@@ -68,23 +68,51 @@ def checkIfTradingHours():
     else:
         return True
 
+
+def getStockPrice(ticker):
+    '''
+    Returns current stock price for this ticker.
+    This uses my free trial account with rapidAPI.com, which is limited to 500 free calls per month.
+    So we will only check every half hour, and only during trading hours.
+    '''
+    
+    url = "https://apidojo-yahoo-finance-v1.p.rapidapi.com/stock/v2/get-summary"
+
+    querystring = {"symbol":ticker,"region":"US"}
+
+    headers = {
+            'x-rapidapi-key': os.environ['RAPIDAPI_KEY'],
+            'x-rapidapi-host': os.environ['RAPIDAPI_HOST']
+        }
+    
+    response = requests.request("GET", url, headers=headers, params=querystring)
+    response_json = json.loads(response.text)
+    price = response_json['price']['regularMarketPrice']['fmt']
+    print(f"The current price of {ticker} is {price}")
+    
+    return price
+
 def getStomnkPriceDataframe(ticker):
+    '''
+    1. Fetches current stock price of ticker using getStockPrice(ticker)
+    2. Returns a dataframe containing the result along with current timestamp
+    '''
+
+    if checkIfTradingHours():
+        price = getStockPrice(ticker)
+        output_dict = dict()
+        output_dict['Date']=date.today()
+        output_dict['Timestamp']=datetime.now(tz=None)    
+        output_dict['Ticker']=ticker
+        output_dict['Price']=price
+        new_data_df = pd.DataFrame(output_dict, index=[0])
     
-    # Get current price of stomnk
-    url = f'https://finance.yahoo.com/quote/{ticker}?p={ticker}&.tsrc=fin-srch'
-    page = requests.get(url)
-    soup = BeautifulSoup(page.content, "html.parser")
-    price = soup.find('div',{'class': 'My(6px) Pos(r) smartphone_Mt(6px)'}).find('span').text
-    
-    output_dict = dict()
-    output_dict['Date']=date.today()
-    output_dict['Timestamp']=datetime.now(tz=None)    
-    output_dict['Ticker']=ticker
-    output_dict['Price']=price
-    
-    new_data_df = pd.DataFrame(output_dict, index=[0])
-    
-    return new_data_df
+        return new_data_df
+
+    # If outside of trading hours, do not run! We only get 500 free API calls per month lol. MONEY PLEASE???
+    else:
+        print("Outside trading hours. Chill")
+        return None
 
 def createSlackMessage(new_data_df,price_change):
     timestamp = new_data_df['Timestamp'][0]
@@ -127,52 +155,52 @@ def updateStonkxData(ticker):
     3b) If price is same, do nothing
     '''
     
-    # Get df with updated stonk data
-    new_data_df = getStomnkPriceDataframe(ticker)
+
+    if not checkIfTradingHours():
+        print("We are outside trading hours. Chill")
+        return
     
-    # We will only add this to the Google Sheet if the price has changed. 
-    # Fetch data from the existing sheet and compare our new dataframe with the most recent row in the Gsheet
-    
-    # Load the worksheet as a dataframe
-    sheet_index = 0
-    sheet_as_df = loadGoogleSheetAsDF(worksheet_key, sheet_index).sort_values(by=['Timestamp'])
-    
-    # Filter to rows for specific ticker
-    sheet_as_df = sheet_as_df[sheet_as_df['Ticker']==ticker]
+    else:
+        # Get df with updated stonk data
+        new_data_df = getStomnkPriceDataframe(ticker)
 
-    # Compare price values in latest row vs. prior row
-    previous_price = sheet_as_df.iloc[len(sheet_as_df)-1:len(sheet_as_df)].reset_index()['Price'][0]
-    previous_price = float(previous_price)
-    new_price = new_data_df['Price'][0]
-    new_price = float(new_price)
-    price_change = new_price/previous_price-1
+        # We will only add this to the Google Sheet if the price has changed. 
+        # Fetch data from the existing sheet and compare our new dataframe with the most recent row in the Gsheet
 
-    print(f"new price: {new_price}. Old price: {previous_price}. Price change: {price_change}")
-    print(f"Has the price changed? {new_price!=previous_price}")
+        # Load the worksheet as a dataframe
+        sheet_index = 0
+        sheet_as_df = loadGoogleSheetAsDF(worksheet_key, sheet_index).sort_values(by=['Timestamp'])
 
-    # If price has changed, append the new number to the Google Sheet
-    if float(new_price)!=previous_price:
-        print("Adding new data to spreadsheet")
-        updated_df = sheet_as_df.append(new_data_df)
-        gd.set_with_dataframe(worksheet, updated_df)
-        
+        # Filter to rows for specific ticker
+        sheet_as_df = sheet_as_df[sheet_as_df['Ticker']==ticker]
 
-        # Post to Slack, but only during trading hours
-        message = createSlackMessage(new_data_df,price_change)
-        print(f"Slack message: {message}")
-        
-        if checkIfTradingHours():
-            print("Updating Slack!")
+        # Compare price values in latest row vs. prior row
+        previous_price = sheet_as_df.iloc[len(sheet_as_df)-1:len(sheet_as_df)].reset_index()['Price'][0]
+        previous_price = float(previous_price)
+        new_price = new_data_df['Price'][0]
+        new_price = float(new_price)
+        price_change = new_price/previous_price-1
+
+        print(f"new price: {new_price}. Old price: {previous_price}. Price change: {price_change}")
+        print(f"Has the price changed? {new_price!=previous_price}")
+
+        # If price has changed, append the new number to the Google Sheet
+        if float(new_price)!=previous_price:
+            print("Adding new data to spreadsheet")
+            updated_df = sheet_as_df.append(new_data_df)
+            gd.set_with_dataframe(worksheet, updated_df)
+
+
+            # Post to Slack, but only during trading hours
+            message = createSlackMessage(new_data_df,price_change)
+            print(f"Slack message: {message}")
             post_message_to_slack(message, blocks = None)
 
+        # If price has not changed, nothing happens
         else:
-            print("Outside trading hours. Chill")
-    
-    # If price has not changed, nothing happens
-    else:
-        print("Price has not changed - HODL")
+            print("Price has not changed - HODL")
 
-    print("All done!")
+        print("All done!")
 
 def updateDailySummaryData():
     '''
@@ -274,7 +302,7 @@ def updateDailySummaryData():
 def main():
 
     scheduler = BackgroundScheduler(executors=executors)
-    scheduler.add_job(updateStonkxData, 'interval', seconds=600, args=["GME"])
+    scheduler.add_job(updateStonkxData, 'interval', seconds=30, args=["GME"])
     #time.sleep(30) #offset the schedulers by 30 seconds
     scheduler.add_job(updateDailySummaryData, 'interval', seconds=600, args=None)
     #scheduler.add_job(updateDailySummaryData, CronTrigger.from_crontab('0 22 * * *'), args=None)
