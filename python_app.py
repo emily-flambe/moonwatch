@@ -276,7 +276,7 @@ def main():
     scheduler = BackgroundScheduler(executors=executors)
     scheduler.add_job(updateStonkxData, 'interval', seconds=600, args=["GME"])
     #time.sleep(30) #offset the schedulers by 30 seconds
-    scheduler.add_job(updateDailySummaryData, 'interval', seconds=10, args=None)
+    scheduler.add_job(updateDailySummaryData, 'interval', seconds=600, args=None)
     #scheduler.add_job(updateDailySummaryData, CronTrigger.from_crontab('0 22 * * *'), args=None)
     scheduler.start()
 
