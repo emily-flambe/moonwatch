@@ -369,16 +369,16 @@ def postGoodMorningMessage():
 def main():
 
     # Run tasks manually on re-deploy
-    # postEODStatusUpdate('GME')
-    # updateHistoricalData('GME')
-    postGoodMorningMessage()
+    #postEODStatusUpdate('GME')
+    #updateHistoricalData('GME')
+    #postGoodMorningMessage()
 
     # Set up scheduler
     scheduler = BackgroundScheduler(executors=executors)
     scheduler.add_job(updateStonkxData, CronTrigger.from_crontab('*/30 * * * *'), args=["GME"])
     scheduler.add_job(updateHistoricalData, CronTrigger.from_crontab('5 20 * * *'), args=["GME"])
     scheduler.add_job(postEODStatusUpdate, CronTrigger.from_crontab('10 20 * * *'), args=["GME"])
-    scheduler.add_job(postGoodMorningMessage, CronTrigger.from_crontab('25 13 * * *'), args=["GME"])
+    scheduler.add_job(postGoodMorningMessage, CronTrigger.from_crontab('25 13 * * *'), args=None)
     scheduler.start()
 
     try:
