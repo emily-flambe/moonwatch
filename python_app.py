@@ -341,6 +341,7 @@ def updateHistoricalData(ticker):
     
     historical_data_df['Date'] = [convertEpochToDate(x) for x in historical_data_df['timestamp_epoch']]
     historical_data_df['Ticker'] = ticker
+    historical_data_df = historical_data_df.sort_values('Date',ascending=False)
     
     # update the Google Sheets worksheet
     sheet_index=2
