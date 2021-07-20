@@ -345,7 +345,7 @@ def postEODStatusUpdate(ticker):
     print("Sending EOD summary message to Slack")
     post_message_to_slack(EOD_summary_message, blocks = None)
 
-def postGoodMorningMessage(ticker):
+def postGoodMorningMessage():
     '''
     Just a friendly greeting to start the trading day
     '''
