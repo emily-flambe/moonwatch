@@ -355,7 +355,7 @@ def updateHistoricalData(ticker):
 def main():
 
     # Run tasks manually on re-deploy
-    updateHistoricalData()
+    updateHistoricalData('GME')
 
     # Set up scheduler
     scheduler = BackgroundScheduler(executors=executors)
