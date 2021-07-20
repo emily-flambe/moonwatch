@@ -7,8 +7,6 @@ import gspread
 import gspread_dataframe as gd
 from gspread_dataframe import set_with_dataframe
 from datetime import date, datetime, timedelta, time
-from bs4 import BeautifulSoup
-from urllib.request import urlopen
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.executors.pool import ThreadPoolExecutor
 from apscheduler.triggers.cron import CronTrigger
@@ -124,8 +122,6 @@ def getStomnkPriceDataframe(ticker):
         return None
 
 def createSlackMessage(new_data_df,price_change):
-    timestamp = new_data_df['Timestamp'][0]
-    ticker = new_data_df['Ticker'][0]
     price = new_data_df['Price'][0]
 
     if price_change>0.05:
@@ -169,7 +165,6 @@ def updateStonkxData(ticker):
     3a) If price has changed, write a new row to the Google Sheet and send a message to Slack
     3b) If price is same, do nothing
     '''
-    
 
     if not checkIfTradingHours():
         print("We are outside trading hours. Chill")
@@ -353,13 +348,14 @@ def postEODStatusUpdate(ticker):
 def main():
 
     # Run tasks manually on re-deploy
-    postEODStatusUpdate('GME')
+    # postEODStatusUpdate('GME')
     # updateHistoricalData('GME')
 
     # Set up scheduler
     scheduler = BackgroundScheduler(executors=executors)
     scheduler.add_job(updateStonkxData, CronTrigger.from_crontab('*/30 * * * *'), args=["GME"])
-    scheduler.add_job(updateHistoricalData, CronTrigger.from_crontab('0 22 * * *'), args=["GME"])
+    scheduler.add_job(updateHistoricalData, CronTrigger.from_crontab('5 20 * * *'), args=["GME"])
+    scheduler.add_job(postEODStatusUpdate, CronTrigger.from_crontab('10 20 * * *'), args=["GME"])
     scheduler.start()
 
     try:
