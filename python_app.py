@@ -292,9 +292,68 @@ def updateHistoricalData(ticker):
     
     print(f"Historical data for {ticker} updated successfully")
 
+def postEODStatusUpdate(ticker):
+    '''
+    For a given ticker, post a status update to #gme_moonwatch summarizing the day's trading stats
+    This will be scheduled to run at the end of every trading day
+    '''
+    
+    # Load the worksheet as a dataframe
+    summary_sheet_index = 1
+    summary_df = loadGoogleSheetAsDF(worksheet_key, summary_sheet_index)
+        
+    # Filter summary to selected ticker & today's date
+    today = str(date.today())
+    today_summary = summary_df[(summary_df['Date']==today) & (summary_df['Ticker']==ticker)]
+    
+    # Extract metrics from the summary table
+    trading_open = round(today_summary['open'][0],2)
+    trading_close = round(today_summary['close'][0],2)
+    trading_high = round(today_summary['high'][0],2)
+    trading_low = round(today_summary['low'][0],2)
+    trading_volume = today_summary['volume'][0]
+    
+    trading_intraday_delta = today_summary['Intraday Price Change (Dollars)'][0]
+    trading_intraday_delta_pct = today_summary['Intraday Price Change (Percentage)'][0]
+    trading_intraday_delta_pct = str(round(trading_intraday_delta_pct*100,1))+"%"
+    trading_close_vs_prior_day = today_summary['Closing Price Delta from Prior Day (Dollars)'][0]
+    trading_close_vs_prior_day_pct = today_summary['Closing Price Delta from Prior Day (Percentage)'][0]
+    trading_close_vs_prior_day_pct = str(round(trading_close_vs_prior_day_pct*100,1))+"%"
+    
+    if trading_intraday_delta>0:
+        trading_intraday_delta_direction='Up'
+    else:
+        trading_intraday_delta_direction='Down'
+        
+    if trading_close_vs_prior_day>0:
+        trading_close_vs_prior_day_direction='Up'
+    else:
+        trading_close_vs_prior_day_direction='Down'    
+        
+    # Craft a beautiful and helpful Slack message
+    EOD_summary_message = f'''
+    Hello apes! What a day it has been! Here is your summary of our progress towards the :rocket: moon :rocket: today.
+    
+    Open: ${trading_open}
+    Close: ${trading_close} ({trading_intraday_delta_direction} {trading_intraday_delta_pct} from open; {trading_close_vs_prior_day_direction} {trading_close_vs_prior_day_pct} from prior close)
+    Today's high: ${trading_high} :rocket:
+    Today's low: ${trading_low} :porg::sweat_drops:
+    Today's trading volume: {trading_volume} (is that a lot? :thinkintense:)
+    
+    *The following is not financial advice, I just love the stock:*
+    
+    Outlook: Bullish
+    Recommendation: HODL
+    '''
+    
+    # Update slack!    
+    print("Sending EOD summary message to Slack")
+    post_message_to_slack(EOD_summary_message, blocks = None)
+
 def main():
 
     # Run tasks manually on re-deploy
+    postEODStatusUpdate('GME')
     # updateHistoricalData('GME')
 
     # Set up scheduler
