@@ -65,7 +65,7 @@ def checkIfTradingHours():
 
     current_time = datetime.now().time()
     market_open_time = datetime(2021, 1, 1, 13, 30, 0).time() #trading hours in UTC
-    market_close_time = datetime(2021, 1, 1, 21, 0, 0).time()
+    market_close_time = datetime(2021, 1, 1, 20, 2, 0).time()
     
     weekday = datetime.today().strftime('%A')
     if weekday=='Saturday' or weekday=='Sunday':
@@ -345,17 +345,40 @@ def postEODStatusUpdate(ticker):
     print("Sending EOD summary message to Slack")
     post_message_to_slack(EOD_summary_message, blocks = None)
 
+def postGoodMorningMessage(ticker):
+    '''
+    Just a friendly greeting to start the trading day
+    '''
+    
+    greeting_message = f'''
+    :city_sunrise: Good morning apes! Let's buckle up and make today the best day it can be!
+        
+    :gem:
+    :gem: :gem:
+    :gem: :gem: :gem:
+    :gem: :gem: :gem: :gem: :rocket: :banana: :gorilla:
+    :gem: :gem: :gem:
+    :gem: :gem:
+    :gem:
+    '''
+    
+    # Update slack!    
+    print("Sending good morning message to Slack")
+    post_message_to_slack(greeting_message, blocks = None)
+
 def main():
 
     # Run tasks manually on re-deploy
     # postEODStatusUpdate('GME')
     # updateHistoricalData('GME')
+    postGoodMorningMessage()
 
     # Set up scheduler
     scheduler = BackgroundScheduler(executors=executors)
     scheduler.add_job(updateStonkxData, CronTrigger.from_crontab('*/30 * * * *'), args=["GME"])
     scheduler.add_job(updateHistoricalData, CronTrigger.from_crontab('5 20 * * *'), args=["GME"])
     scheduler.add_job(postEODStatusUpdate, CronTrigger.from_crontab('10 20 * * *'), args=["GME"])
+    scheduler.add_job(postGoodMorningMessage, CronTrigger.from_crontab('25 13 * * *'), args=["GME"])
     scheduler.start()
 
     try:
