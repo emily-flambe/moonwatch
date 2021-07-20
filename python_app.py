@@ -128,12 +128,16 @@ def createSlackMessage(new_data_df,price_change):
     ticker = new_data_df['Ticker'][0]
     price = new_data_df['Price'][0]
 
-    if price_change>0.005:
-        message = f":rocket::rocket::rocket: ${price} :rocket::rocket::rocket:"
-    elif price_change>0:
+    if price_change>0.01:
+        message = f":biden_point::rocket: ${price}"
+    elif price_change>0.005:
         message = f":rocket: ${price}"
+    elif price_change>0:
+        message = f":banana: ${price}"
+    elif price_change<-.01:
+        message = f":porg::sweat_drops: ${price}"
     elif price_change<-.005:
-        message = f":raised_hands::gem::raised_hands::gem: ${price} :raised_hands::gem::raised_hands::gem:"
+        message = f":porg: ${price}"
     else:
         message = f":gorilla: ${price}"
 
