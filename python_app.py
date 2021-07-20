@@ -278,7 +278,7 @@ def updateHistoricalData(ticker):
     historical_data_df['Closing Price Delta from Prior Day (Percentage)'] = [(historical_data_df['close'][i]/historical_data_df['close prior day'][i])-1 for i in range(len(historical_data_df['close']))] 
 
     # update the Google Sheets worksheet
-    sheet_index=2
+    sheet_index=1
     gc = authenticateGoogleSheets()
     sh = gc.open_by_key(worksheet_key)
     historical_data_worksheet = sh.get_worksheet(sheet_index)
@@ -289,7 +289,7 @@ def updateHistoricalData(ticker):
 def main():
 
     # Run tasks manually on re-deploy
-    updateHistoricalData('GME')
+    # updateHistoricalData('GME')
 
     # Set up scheduler
     scheduler = BackgroundScheduler(executors=executors)
