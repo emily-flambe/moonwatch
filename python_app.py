@@ -343,6 +343,24 @@ def updateHistoricalData(ticker):
     historical_data_df['Ticker'] = ticker
     historical_data_df = historical_data_df.sort_values('Date',ascending=False)
     
+    # Add fields for prior day data
+    # Add rownums partitioned by ticker. We will use these to get prior day stats
+    rownum = historical_data_df.groupby(['Ticker']).cumcount()
+    historical_data_df['rownum'] = [x for x in rownum]
+
+    # Create "prior day" dataframe with rownums incremented by 1
+    historical_data_df_prior_day = historical_data_df.copy()
+    # drop columns we don't need
+    historical_data_df_prior_day = historical_data_df_prior_day.drop(['timestamp_epoch'],axis=1)
+    historical_data_df_prior_day = historical_data_df_prior_day.drop(['Date'],axis=1)
+    historical_data_df_prior_day.columns = [x+' prior day' for x in historical_data_df_prior_day.columns]
+    historical_data_df_prior_day = historical_data_df_prior_day.rename(columns={'Ticker prior day':'Ticker'})
+    historical_data_df_prior_day = historical_data_df_prior_day.rename(columns={'rownum prior day':'rownum'})
+    historical_data_df_prior_day['rownum']=[x+1 for x in historical_data_df_prior_day['rownum']]
+    historical_data_df = historical_data_df.merge(historical_data_df_prior_day,how='inner',on=['Ticker','rownum'])
+    historical_data_df = historical_data_df[['Date','Ticker','timestamp_epoch','open','high','low','close','volume','adjclose','open prior day','high prior day','low prior day','close prior day','volume prior day','adjclose prior day']]
+
+
     # update the Google Sheets worksheet
     sheet_index=2
     gc = authenticateGoogleSheets()
