@@ -217,103 +217,6 @@ def updateStonkxData(ticker):
 
         print("All done!")
 
-def updateDailySummaryData():
-    '''
-    Update the daily summary stats in the google sheet (one row per date + ticker)
-    '''
-    
-    print("Updating daily summary stats in Google Sheets")
-    
-    # Get data from the Google Sheet
-    sheet_index = 0
-    price_data_df = loadGoogleSheetAsDF(worksheet_key, sheet_index)
-    
-    # Calculate daily summary stats for each ticker
-    # Max
-    max_prices = pd.DataFrame(price_data_df.groupby('Date').max()[['Ticker','Price']])
-    max_prices = max_prices.rename(columns={"Price":"Max"}).reset_index()
-    
-    # Min
-    min_prices = pd.DataFrame(price_data_df.groupby('Date').min()[['Ticker','Price']])
-    min_prices = min_prices.rename(columns={"Price":"Min"}).reset_index()
-    
-    # Avg
-    avg_prices = pd.DataFrame(price_data_df.groupby(['Date','Ticker']).mean())
-    avg_prices = avg_prices.rename(columns={"Price":"Average"}).reset_index()
-    
-    # Stdev
-    stdev_prices = pd.DataFrame(price_data_df.groupby(['Date','Ticker']).std())
-    stdev_prices = stdev_prices.rename(columns={"Price":"Stdev"}).reset_index()
-    
-    # Open & closing prices
-    # Get market open and closing prices for each date + ticker
-    rownums_ascending = price_data_df.groupby(['Date','Ticker']).cumcount()
-    price_data_df['rownum_ascending'] = [x for x in rownums_ascending]
-    price_data_df = price_data_df.sort_values(['Date','Ticker','Timestamp'],ascending=False)
-    rownums_descending = price_data_df.groupby(['Date','Ticker']).cumcount()
-    price_data_df['rownum_descending'] = [x for x in rownums_descending]
-    open_prices = price_data_df[price_data_df['rownum_ascending']==0][['Date','Ticker','Price']]
-    open_prices = open_prices.rename(columns={"Price":"Opening Price"})
-    closing_prices = price_data_df[price_data_df['rownum_descending']==0][['Date','Ticker','Price']]
-    closing_prices = closing_prices.rename(columns={"Price":"Closing Price"})
-    
-    # Calculate prior day stats for each date + ticker
-    # Prior Day Max
-    prior_day_maxes = max_prices.copy()
-    prior_day_maxes['Date'] = [(datetime.strptime(x, '%m/%d/%Y')+timedelta(days=1)).strftime('%-m/%d/%Y') for x in prior_day_maxes['Date']]
-    prior_day_maxes = prior_day_maxes.rename(columns={"Max":"Prior Day Max"})
-    
-    # Prior Day Min
-    prior_day_mins = min_prices.copy()
-    prior_day_mins['Date'] = [(datetime.strptime(x, '%m/%d/%Y')+timedelta(days=1)).strftime('%-m/%d/%Y') for x in prior_day_mins['Date']]
-    prior_day_mins = prior_day_mins.rename(columns={"Min":"Prior Day Min"})
-    
-    # Prior Day Avg
-    prior_day_avgs = avg_prices.copy()
-    prior_day_avgs['Date'] = [(datetime.strptime(x, '%m/%d/%Y')+timedelta(days=1)).strftime('%-m/%d/%Y') for x in prior_day_avgs['Date']]
-    prior_day_avgs = prior_day_avgs.rename(columns={"Average":"Prior Day Avg"})
-    
-    # Prior Day Stdev
-    prior_day_stds = stdev_prices.copy()
-    prior_day_stds['Date'] = [(datetime.strptime(x, '%m/%d/%Y')+timedelta(days=1)).strftime('%-m/%d/%Y') for x in prior_day_stds['Date']]
-    prior_day_stds = prior_day_stds.rename(columns={"Stdev":"Prior Day Stdev"})
-    
-    # Prior Day Open prices
-    prior_day_open_prices = open_prices.copy()
-    prior_day_open_prices['Date'] = [(datetime.strptime(x, '%m/%d/%Y')+timedelta(days=1)).strftime('%-m/%d/%Y') for x in prior_day_open_prices['Date']]
-    prior_day_open_prices = prior_day_open_prices.rename(columns={"Opening Price":"Prior Day Opening Price"})
-    
-    # Prior Day Closing prices
-    prior_day_closing_prices = closing_prices.copy()
-    prior_day_closing_prices['Date'] = [(datetime.strptime(x, '%m/%d/%Y')+timedelta(days=1)).strftime('%-m/%d/%Y') for x in prior_day_closing_prices['Date']]
-    prior_day_closing_prices = prior_day_closing_prices.rename(columns={"Closing Price":"Prior Day Closing Price"})
-    
-    # Do a bunch of merges to construct the daily summary dataframe
-    daily_summary_df = max_prices.merge(min_prices,how='inner',on=['Date','Ticker'])
-    daily_summary_df = daily_summary_df.merge(avg_prices,how='inner',on=['Date','Ticker'])
-    daily_summary_df = daily_summary_df.merge(stdev_prices,how='inner',on=['Date','Ticker'])
-    daily_summary_df = daily_summary_df.merge(open_prices,how='inner',on=['Date','Ticker'])
-    daily_summary_df = daily_summary_df.merge(closing_prices,how='inner',on=['Date','Ticker'])
-    daily_summary_df = daily_summary_df.merge(prior_day_maxes,how='inner',on=['Date','Ticker'])
-    daily_summary_df = daily_summary_df.merge(prior_day_mins,how='inner',on=['Date','Ticker'])
-    daily_summary_df = daily_summary_df.merge(prior_day_avgs,how='inner',on=['Date','Ticker'])
-    daily_summary_df = daily_summary_df.merge(prior_day_stds,how='inner',on=['Date','Ticker'])
-    daily_summary_df = daily_summary_df.merge(prior_day_open_prices,how='inner',on=['Date','Ticker'])
-    daily_summary_df = daily_summary_df.merge(prior_day_closing_prices,how='inner',on=['Date','Ticker'])
-    
-    # Overwrite daily summary table in Google Sheets with new dataframe
-    print("Daily summary dataframe created. Attempting to update Google Sheets...")
-    try:
-        summary_sheet_index = 1
-        gc = authenticateGoogleSheets()
-        sh = gc.open_by_key(worksheet_key)
-        daily_summary_worksheet = sh.get_worksheet(summary_sheet_index)
-        gd.set_with_dataframe(daily_summary_worksheet, daily_summary_df)
-        print("Successfully updated Google Sheets with enfreshened summary stats")
-    
-    except:
-        print("Failed to update Google Sheets :( :( :(")
-
 def updateHistoricalData(ticker):
     '''
     Update Google sheets tab containing historical data for {ticker}
@@ -321,45 +224,58 @@ def updateHistoricalData(ticker):
     '''
     
     print(f"Updating historical data for {ticker}...")
+
+
+    # call API to fetch historical data
     url = "https://apidojo-yahoo-finance-v1.p.rapidapi.com/stock/v3/get-historical-data"
-    
     querystring = {"symbol":ticker,"region":"US"}
-    
     headers = {
             'x-rapidapi-key': os.environ['RAPIDAPI_KEY'],
             'x-rapidapi-host': os.environ['RAPIDAPI_HOST']
         }
-    
     response = requests.request("GET", url, headers=headers, params=querystring)
-
     historical_data_json = json.loads(response.text)
     
-    # call API to fetch historical data
+    # load response data into a dataframe
     historical_data_df = pd.DataFrame(historical_data_json['prices'])
-    
     historical_data_df = historical_data_df.rename(columns={"date":"timestamp_epoch"})
-    
     historical_data_df['Date'] = [convertEpochToDate(x) for x in historical_data_df['timestamp_epoch']]
+    historical_data_df = historical_data_df.drop(['timestamp_epoch'],axis=1)
     historical_data_df['Ticker'] = ticker
-    historical_data_df = historical_data_df.sort_values('Date',ascending=False)
-    
-    # Add fields for prior day data
+
     # Add rownums partitioned by ticker. We will use these to get prior day stats
     rownum = historical_data_df.groupby(['Ticker']).cumcount()
     historical_data_df['rownum'] = [x for x in rownum]
 
     # Create "prior day" dataframe with rownums incremented by 1
     historical_data_df_prior_day = historical_data_df.copy()
-    # drop columns we don't need
-    historical_data_df_prior_day = historical_data_df_prior_day.drop(['timestamp_epoch'],axis=1)
     historical_data_df_prior_day = historical_data_df_prior_day.drop(['Date'],axis=1)
     historical_data_df_prior_day.columns = [x+' prior day' for x in historical_data_df_prior_day.columns]
     historical_data_df_prior_day = historical_data_df_prior_day.rename(columns={'Ticker prior day':'Ticker'})
     historical_data_df_prior_day = historical_data_df_prior_day.rename(columns={'rownum prior day':'rownum'})
-    historical_data_df_prior_day['rownum']=[x+1 for x in historical_data_df_prior_day['rownum']]
+    historical_data_df_prior_day['rownum']=[x-1 for x in historical_data_df_prior_day['rownum']]
     historical_data_df = historical_data_df.merge(historical_data_df_prior_day,how='inner',on=['Ticker','rownum'])
-    historical_data_df = historical_data_df[['Date','Ticker','timestamp_epoch','open','high','low','close','volume','adjclose','open prior day','high prior day','low prior day','close prior day','volume prior day','adjclose prior day']]
+    historical_data_df = historical_data_df[['Date'
+                                            ,'Ticker'
+                                            ,'open'
+                                            ,'high'
+                                            ,'low'
+                                            ,'close'
+                                            ,'volume'
+                                            ,'adjclose'
+                                            ,'open prior day'
+                                            ,'high prior day'
+                                            ,'low prior day'
+                                            ,'close prior day'
+                                            ,'volume prior day'
+                                            ,'adjclose prior day'
+                                           ]]
 
+    # Add a few more calculated fields
+    historical_data_df['Intraday Price Change (Dollars)'] = historical_data_df['close'] - historical_data_df['open']
+    historical_data_df['Intraday Price Change (Percentage)'] = [(historical_data_df['close'][i]/historical_data_df['open'][i])-1 for i in range(len(historical_data_df['close']))] 
+    historical_data_df['Closing Price Delta from Prior Day (Dollars)'] = historical_data_df['close'] - historical_data_df['close prior day']
+    historical_data_df['Closing Price Delta from Prior Day (Percentage)'] = [(historical_data_df['close'][i]/historical_data_df['close prior day'][i])-1 for i in range(len(historical_data_df['close']))] 
 
     # update the Google Sheets worksheet
     sheet_index=2
@@ -378,9 +294,7 @@ def main():
     # Set up scheduler
     scheduler = BackgroundScheduler(executors=executors)
     scheduler.add_job(updateStonkxData, CronTrigger.from_crontab('*/30 * * * *'), args=["GME"])
-    #scheduler.add_job(updateDailySummaryData, 'interval', seconds=600, args=None)
     scheduler.add_job(updateHistoricalData, CronTrigger.from_crontab('0 22 * * *'), args=["GME"])
-    #scheduler.add_job(updateDailySummaryData, CronTrigger.from_crontab('0 22 * * *'), args=None)
     scheduler.start()
 
     try:
