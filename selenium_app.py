@@ -9,9 +9,6 @@ from selenium.webdriver.common.keys import Keys
 GOOGLE_CHROME_PATH = '/app/.apt/usr/bin/google_chrome'
 CHROMEDRIVER_PATH = '/app/.chromedriver/bin/chromedriver'
 
-def HelloWorld():
-    print("SUP YAY WOW it's running")
-
 def getStonkScreenshot(ticker):
         
     # Configure Chromedriver
@@ -24,7 +21,8 @@ def getStonkScreenshot(ticker):
 
     # Launch the driver
     driver = webdriver.Chrome(execution_path=CHROMEDRIVER_PATH, chrome_options=chrome_options)
-    
+    print("Webdriver launched. Fetching a screenshot...")
+
     # Fetch the URL
     url = f'https://www.google.com/search?q={ticker}+stock'
     driver.get(url)
@@ -35,8 +33,6 @@ def getStonkScreenshot(ticker):
     print("Screenshot saved successfully")
     
 def main():
-
-    ticker = 'GME'
     
     # 1. Define the actuator
     executors = {
@@ -45,7 +41,7 @@ def main():
 
     # Set up scheduler
     scheduler = BackgroundScheduler(executors=executors)
-    scheduler.add_job(HelloWorld, 'interval', seconds=10, args=None)
+    scheduler.add_job(getStonkScreenshot, 'interval', seconds=10, args=['GME'])
     scheduler.start()
 
     try:
