@@ -1,5 +1,8 @@
 # deployed to heroku following these instructions: https://medium.com/@mikelcbrowne/running-chromedriver-with-python-selenium-on-heroku-acc1566d161c
 import time as t
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.executors.pool import ThreadPoolExecutor
+from apscheduler.triggers.cron import CronTrigger
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 
