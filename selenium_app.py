@@ -27,7 +27,7 @@ def getStonkScreenshot(ticker):
     opts.binary_location = chrome_exec_shim
     opts.add_argument('--disable-gpu')
     opts.add_argument('--no-sandbox')
-    driver = webdriver.Chrome(executable_path='/app/development/chromedriver', chrome_options=opts)
+    driver = webdriver.Chrome(executable_path='/app/.chromedriver/bin/chromedriver', chrome_options=opts)
 
     # Launch the driver
 
