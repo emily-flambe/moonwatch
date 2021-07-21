@@ -20,7 +20,7 @@ def getStonkScreenshot(ticker):
     chrome_options.binary_location = GOOGLE_CHROME_PATH
 
     # Launch the driver
-    driver = webdriver.Chrome(execution_path=CHROMEDRIVER_PATH, chrome_options=chrome_options)
+    driver = webdriver.Chrome(CHROMEDRIVER_PATH, chrome_options=chrome_options)
     print("Webdriver launched. Fetching a screenshot...")
 
     # Fetch the URL
