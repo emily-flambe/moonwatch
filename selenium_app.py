@@ -13,17 +13,26 @@ CHROMEDRIVER_PATH = '/app/.chromedriver/bin/chromedriver'
 def getStonkScreenshot(ticker):
         
     # Configure Chromedriver
-    chrome_options = webdriver.ChromeOptions()
-    chrome_options.add_argument('--ignore-certificate-errors')
-    chrome_options.add_argument("--test-type")
-    chrome_options.add_argument('--disable-gpu')
-    chrome_options.add_argument('--no-sandbox')
-    chrome_options.binary_location = GOOGLE_CHROME_PATH
+    #chrome_options = webdriver.ChromeOptions()
+    #chrome_options.add_argument('--ignore-certificate-errors')
+    #chrome_options.add_argument('--test-type')
+    #chrome_options.add_argument('--disable-gpu')
+    #chrome_options.add_argument('--no-sandbox')
+    #chrome_options.binary_location = GOOGLE_CHROME_PATH
+
+
+
+    chrome_exec_shim = "/app/.apt/opt/google/chrome/chrome"
+    opts = webdriver.ChromeOptions()
+    opts.binary_location = chrome_exec_shim
+    opts.addArguments("--no-sandbox");
+    opts.addArguments("--disable-gpu");
+    driver = webdriver.Chrome(executable_path=chrome_exec_shim, chrome_options=opts)
 
     # Launch the driver
 
-    chrome_exec_shim = os.environ.get("GOOGLE_CHROME_BIN", "chromedriver")
-    driver = webdriver.Chrome(executable_path=chrome_exec_shim, chrome_options=chrome_options)
+    #chrome_exec_shim = os.environ.get("GOOGLE_CHROME_BIN", "chromedriver")
+    #driver = webdriver.Chrome(executable_path=chrome_exec_shim, chrome_options=chrome_options)
     print("Webdriver launched. Fetching a screenshot...")
 
     # Fetch the URL
