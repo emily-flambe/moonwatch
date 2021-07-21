@@ -1,5 +1,6 @@
 # deployed to heroku following these instructions: https://medium.com/@mikelcbrowne/running-chromedriver-with-python-selenium-on-heroku-acc1566d161c
 import time as t
+import os
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.executors.pool import ThreadPoolExecutor
 from apscheduler.triggers.cron import CronTrigger
@@ -20,7 +21,9 @@ def getStonkScreenshot(ticker):
     chrome_options.binary_location = GOOGLE_CHROME_PATH
 
     # Launch the driver
-    driver = webdriver.Chrome(CHROMEDRIVER_PATH, chrome_options=chrome_options)
+
+    chrome_exec_shim = os.environ.get("GOOGLE_CHROME_BIN", "chromedriver")
+    driver = webdriver.Chrome(executable_path=chrome_exec_shim, chrome_options=chrome_options)
     print("Webdriver launched. Fetching a screenshot...")
 
     # Fetch the URL
