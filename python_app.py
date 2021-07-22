@@ -461,7 +461,7 @@ def postTrendImage(ticker):
         imgur_url = uploadFileToImgur(filename)
         print(f"Imgur upload success! URL: {imgur_url}. Posting to slack babyyy")
         image_message = f"<{imgur_url}|.>"
-        post_message_to_slack(imgur_url, blocks = None)
+        post_message_to_slack(image_message, blocks = None)
     except:
         print(f"Imgur upload failed :(")
 
