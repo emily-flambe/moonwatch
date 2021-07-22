@@ -33,7 +33,7 @@ def uploadFileToImgur(filename):
         url_output = response_json['data']['link']
     except:
         url_output = None
-        
+
     return url_output
 
 def main():
@@ -45,6 +45,7 @@ def main():
     options.binary_location = GOOGLE_CHROME_BIN
     options.add_argument('--disable-gpu')
     options.add_argument('--no-sandbox')
+    options.add_argument("--window-size=1920,1080")
     options.headless = True
 
     driver = webdriver.Chrome(executable_path=CHROMEDRIVER_PATH , chrome_options=options)
