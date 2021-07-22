@@ -165,7 +165,7 @@ def post_message_to_slack(text, blocks = None):
   
 def updateStonkxData(ticker):
     '''
-    This is the main code that runs every 10 minutes.
+    Fetch realtime stock price and post a message in Slack.
     1) Scrape current stock price from Yahoo! finance
     2) Check to see whether it's changed from the last scrape
     3a) If price has changed, write a new row to the Google Sheet and send a message to Slack
