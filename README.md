@@ -1,7 +1,19 @@
 # MoonWatch
 _Everyone asks "wen moon" - nobody asks "how moon"_
  
-This is a Flask app deployed to Heroku that runs some stuff on scheduled intervals.
+This is a Python app deployed on Heroku that powers a Slack App called "MoonWatch." Currently this is just a silly app for personal use in the Slack team I use to talk to my friends, but who knows what the future will bring?
 
-## Updates
-- **7-16-2021**: Posts the hourly price of GME (scraped from Yahoo! Finance lol) to a channel in Slack (_ever heard of it??_) using a custom integration called MoonWatch, which I made by clicking buttons (in an extremely technical fashion I can assure you)
+As silly as it is, this app does use a handful of handy parlor tricks:
+
+- **Selenium**, to grab screenshots of stock price trendlines from Google
+- **Imgur API**, to upload those screenshots to the great big internet
+- **Yahoo! Finance API**, which fetches the realtime price of a stock (via RapidAPI, which gives us 500 free API calls per month, so can't go coo coo crazy here)
+- **Slack API**, to send messages to the Slack channel dedicated for use with this app
+
+
+## Things this app currently does (as of 7/22/21):
+
+- Price updates (with uplifting and emotionally informative emojis) every half hour during trading hours
+- Trend chart update at midday and end of trading
+- End of trading recap
+- A friendly good morning message to start the day right, just like Wheaties(TMTMTM)
