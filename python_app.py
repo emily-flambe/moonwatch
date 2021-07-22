@@ -409,7 +409,7 @@ def cropImage(filename):
     left = 185
     top = 350
     right = 830
-    bottom = 575
+    bottom = 690
     
     # Cropped image of above dimension
     # (It will not change original image)
@@ -467,19 +467,26 @@ def postTrendImage(ticker):
 
 def main():
 
-    # Run tasks manually on re-deploy
+    # Uncomment to run tasks manually on re-deploy (aka testing in prod lol)
     #postEODStatusUpdate('GME')
     #updateHistoricalData('GME')
     #postGoodMorningMessage()
-    postTrendImage('GME')
+    #postTrendImage('GME')
 
-    # Set up scheduler
+    # Set up scheduler tasks
     scheduler = BackgroundScheduler(executors=executors)
+    # Price update with uplifting emoji every half hour during trading hours
     scheduler.add_job(updateStonkxData, CronTrigger.from_crontab('*/30 * * * *'), args=["GME"])
-    scheduler.add_job(postTrendImage, CronTrigger.from_crontab('0 * * * *'), args=["GME"])
-    scheduler.add_job(updateHistoricalData, CronTrigger.from_crontab('5 20 * * *'), args=["GME"])
-    scheduler.add_job(postEODStatusUpdate, CronTrigger.from_crontab('10 20 * * *'), args=["GME"])
+    # Update historical data & provide EOD summary after market close
+    scheduler.add_job(updateHistoricalData, CronTrigger.from_crontab('2 20 * * *'), args=["GME"])
+    scheduler.add_job(postEODStatusUpdate, CronTrigger.from_crontab('5 20 * * *'), args=["GME"])
+    # Post full trend and metrics at midday and market close
+    scheduler.add_job(postTrendImage, CronTrigger.from_crontab('0 17 * * *'), args=["GME"]) 
+    scheduler.add_job(postTrendImage, CronTrigger.from_crontab('5 20 * * *'), args=["GME"]) 
+    # GOOD MUORNEEENG!!!
     scheduler.add_job(postGoodMorningMessage, CronTrigger.from_crontab('25 13 * * *'), args=None)
+
+    # Let 'er rip
     scheduler.start()
 
     try:
