@@ -185,7 +185,7 @@ def updateStonkxData(ticker):
         # Fetch data from the existing sheet and compare our new dataframe with the most recent row in the Gsheet
 
         # Load the worksheet as a dataframe
-        sheet_index = 0
+        sheet_index = os.environ['ALL_PRICES_SHEET_INDEX']
         sheet_as_df = loadGoogleSheetAsDF(worksheet_key, sheet_index).sort_values(by=['Timestamp'])
 
         # Filter to rows for specific ticker
@@ -286,7 +286,7 @@ def updateHistoricalData(ticker):
     historical_data_df['Closing Price Delta from Prior Day (Percentage)'] = [(historical_data_df['close'][i]/historical_data_df['close prior day'][i])-1 for i in range(len(historical_data_df['close']))] 
 
     # update the Google Sheets worksheet
-    sheet_index=1
+    sheet_index = os.environ['HISTORICAL_DATA_SHEET_INDEX']
     gc = authenticateGoogleSheets()
     sh = gc.open_by_key(worksheet_key)
     historical_data_worksheet = sh.get_worksheet(sheet_index)
@@ -301,8 +301,9 @@ def postEODStatusUpdate(ticker):
     '''
     
     # Load the worksheet as a dataframe
-    summary_sheet_index = 1
-    summary_df = loadGoogleSheetAsDF(worksheet_key, summary_sheet_index)
+
+    sheet_index = os.environ['HISTORICAL_DATA_SHEET_INDEX']
+    summary_df = loadGoogleSheetAsDF(worksheet_key, sheet_index)
         
     # Filter summary to selected ticker & today's date
     today = str(date.today())
@@ -474,7 +475,7 @@ def main():
     #postGoodMorningMessage()
     #postTrendImage('GME')
     tw.tweetMessage('Not another test tweet! sry yall')
-    
+
     # Set up scheduler tasks
     scheduler = BackgroundScheduler(executors=executors)
     # Price update with uplifting emoji every half hour during trading hours
