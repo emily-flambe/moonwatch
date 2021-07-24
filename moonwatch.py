@@ -16,7 +16,8 @@ from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException, WebDriverException
 from selenium.webdriver.chrome.options import Options
 
-    
+import twitter_functions as tw
+
 # 1. Define the actuator
 executors = {
     "default":ThreadPoolExecutor(max_workers=10)
@@ -472,7 +473,8 @@ def main():
     #updateHistoricalData('GME')
     #postGoodMorningMessage()
     #postTrendImage('GME')
-
+    tw.tweetMessage('Not another test tweet! sry yall')
+    
     # Set up scheduler tasks
     scheduler = BackgroundScheduler(executors=executors)
     # Price update with uplifting emoji every half hour during trading hours
