@@ -38,11 +38,14 @@ def tweetMessage(message):
     
     # Post tweet
     print("Tweeting!")
-    response = api.update_status(status=message)
-    if response.text:
-        print("Tweet successful")
-    else: 
-        print("Something went wrong :()")   
+    try:
+        response = api.update_status(status=message)
+        if response.text:
+            print("Tweet successful")
+        else: 
+            print("Something went wrong :()")   
+    except:
+        print("Tweet failed, it's probably fine, there are better things to worry about")
 
 """
 def tweetImage(message,image_url):
