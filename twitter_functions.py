@@ -1,3 +1,4 @@
+import json
 import os
 import tweepy
 
@@ -73,6 +74,34 @@ def tweetMostRecentPrice(ticker):
     else:
         print("We are outside trading hours... dont tweet, it will scare the children")
 
+def retweetMostRecent(screen_name):
+    '''
+    Retweets most recent tweet by screen_name, provided it has been retweeted at least 200 times
+    '''
+
+    api = twitterAuthenticate()
+    tweets = api.user_timeline(screen_name=screen_name,
+                               count=1,
+                               include_rts = False,
+                               tweet_mode = 'extended'
+                               )
+    most_recent_tweet = tweets[0]
+    json_str = json.dumps(most_recent_tweet._json)
+    tweet_json = json.loads(json_str)
+
+    # Only retweet if there have already been at least 200 retweets
+    if tweet_json['retweet_count']<200:
+        print("Not enough retweets - BORING.")
+        return
+    else:
+        print("Retweeting!! LFG")
+        try:
+            tweet_id = tweet_json['id']
+            api.retweet(tweet_id)
+            print("Retweet successful")
+        except:
+            print("Retweet failed (probably already retweeted it, dummy)")
+            
 
 """
 def tweetImage(message,image_url):

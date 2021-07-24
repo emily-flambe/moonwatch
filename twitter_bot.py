@@ -15,12 +15,13 @@ executors = {
 def main():
 
     # Uncomment to run tasks manually on re-deploy (aka testing in prod lol)
-    tw.tweetMostRecentPrice('GME')
+    # tw.tweetMostRecentPrice('GME')
+    tw.retweetMostRecent('ryancohen')
 
     # Set up scheduler tasks
     scheduler = BackgroundScheduler(executors=executors)
-    # Price update with uplifting emoji every half hour during trading hours
     scheduler.add_job(tw.tweetMostRecentPrice, CronTrigger.from_crontab('*/30+1 * * * *'), args=['GME'])
+    scheduler.add_job(tw.retweetMostRecent, 'interval', seconds=300, args=['ryancohen'])
 
     # Let 'er rip
     scheduler.start()
