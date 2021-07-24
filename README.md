@@ -1,9 +1,25 @@
 # MoonWatch
 _Everyone asks "wen moon" - nobody asks "how moon"_
- 
-This is a Python app deployed on Heroku that powers a Slack App called "MoonWatch." Currently this is just a silly app for personal use in the Slack team I use to talk to my friends, but who knows what the future will bring?
 
-As silly as it is, this app does use a handful of handy parlor tricks:
+MoonWatch is a multi-headed beast that empowers Gameshop shareholders to track our progress towards the [Mother of All Short Squeezes](https://moass.info/). It really only has two heads, one of which is a Slack app and the other a Twitter bot ([@MoonWatch_](https://twitter.com/MoonWatch_)).
+
+Both the Slack app and the Twitter bot are Python apps deployed on Heroku. Turns out you get a lot more free credits if you give them your credit card info! What's the worst that could happen?
+
+## Twitter Bot
+### **twitter_bot.py**, which powers [@MoonWatch_](https://twitter.com/MoonWatch_)
+
+- Updates with price every half hour during trading hours
+
+TODO() (fantasies):
+- Pretty much everything else the Slack app does (see below)
+- Retweet tweets from VIPs (e.g., Gamestop CEO Ryan Cohen) once they have reached a certain level of engagement (e.g., # of retweets), with some daily limit (maybe 5 per day? Don't want to scare the children)
+
+## Slack App 
+### **slack_app.py**
+
+Currently this is just a silly app for personal use in the Slack team I use to talk to my friends, but who knows what the future will bring?
+
+As silly as it is, this app does employ a handful of handy parlor tricks:
 
 - **Selenium**, to grab screenshots of stock price trendlines from Google
 - **Imgur API**, to upload those screenshots to the great big internet
