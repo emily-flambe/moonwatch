@@ -1,6 +1,16 @@
 import os
 import tweepy
 
+import moonwatch_utils as moon
+
+# dict for mapping emojis to unicode characters, to make my life easier
+# https://unicode.org/emoji/charts/full-emoji-list.html
+emoji = {
+    "rocket":"\U0001F680", #need to use wide escape for 1F unicode. Don't ask me what THAT means though
+    "blush":"\u263A",
+    "joy":"\U0001F602"
+}
+
 def test_function():
     print("yaaaay")
 
@@ -46,6 +56,23 @@ def tweetMessage(message):
             print("Something went wrong :()")   
     except:
         print("Tweet failed, it's probably fine, there are better things to worry about")
+
+
+def tweetMostRecentPrice(ticker):
+
+    # Get most recent price from the google sheet (function in moonwatch_utils module)
+    price = moon.getMostRecentPriceFromSheet(ticker)
+
+    # Craft the tweet, filling in emoji unicode from dict (top of this file)
+    message = f"""$GME ${price} {emoji['rocket']} #GME #wow #moon #HODL #Apestrong """
+
+    # Send the tweet (if during trading hours)
+
+    if moon.checkIfTradingHours():
+        tweetMessage(message)
+    else:
+        print("We are outside trading hours... dont tweet, it will scare the children")
+
 
 """
 def tweetImage(message,image_url):

@@ -1,24 +1,12 @@
 import moonwatch_utils as moon
-import twitter_functions as tw
-
-import os
 import time as t
-
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.executors.pool import ThreadPoolExecutor
 from apscheduler.triggers.cron import CronTrigger
 
-
-# 1. Define the actuator
 executors = {
     "default":ThreadPoolExecutor(max_workers=10)
 }
-
-KEYFILE = 'service_account_creds.json'
-service_account_creds = os.getenv("SERVICE_ACCOUNT_CREDS")
-worksheet_key = os.getenv("MOONWATCH_WORKSHEET_KEY")
-
-# Functions setup
 
 def main():
 
@@ -27,7 +15,6 @@ def main():
     #updateHistoricalData('GME')
     #postGoodMorningMessage()
     #postTrendImage('GME')
-    tw.tweetMessage('Not another test tweet! sry yall')
 
     # Set up scheduler tasks
     scheduler = BackgroundScheduler(executors=executors)

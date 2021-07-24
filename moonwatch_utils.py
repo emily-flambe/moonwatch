@@ -57,7 +57,7 @@ def checkIfTradingHours():
         return False
     else:
         return True
-        
+
 """
 ------------------------------------
 SLACK API
@@ -111,6 +111,17 @@ def loadGoogleSheetAsDF(worksheet_key, sheet_index):
     sheet_as_df = gd.get_as_dataframe(worksheet)
     
     return sheet_as_df
+
+def getMostRecentPriceFromSheet(ticker):
+
+    # Get prices dataframe
+    # Load the worksheet as a dataframe
+    sheet_index = os.environ['ALL_PRICES_SHEET_INDEX']
+    all_prices_df = loadGoogleSheetAsDF(worksheet_key, sheet_index).sort_values(by=['Timestamp'])
+    all_prices_df = all_prices_df[all_prices_df['Ticker']==ticker]
+    most_recent_price_df = all_prices_df.sort_values('Timestamp',ascending=False).reset_index().loc[0:0][['Timestamp','Price']]
+    most_recent_price = most_recent_price_df['Price'][0]
+    return most_recent_price
 
 """
 ------------------------------------
