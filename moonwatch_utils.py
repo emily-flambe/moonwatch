@@ -1,3 +1,8 @@
+'''
+Functions used for Moonwatch Slack app 
+(Does not include functions for using Twitter API)
+'''
+
 import os
 import json
 import time as t
@@ -5,9 +10,6 @@ import requests
 import pandas as pd
 import gspread
 import gspread_dataframe as gd
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.executors.pool import ThreadPoolExecutor
-from apscheduler.triggers.cron import CronTrigger
 from base64 import b64encode
 from datetime import date, datetime, timedelta, time
 from gspread_dataframe import set_with_dataframe
@@ -16,19 +18,21 @@ from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException, WebDriverException
 from selenium.webdriver.chrome.options import Options
 
-import twitter_functions as tw
-
-# 1. Define the actuator
-executors = {
-    "default":ThreadPoolExecutor(max_workers=10)
-}
-
+"""
+------------------------------------
+VARIABLES AND STUFF
+------------------------------------
+"""
 KEYFILE = 'service_account_creds.json'
 service_account_creds = os.getenv("SERVICE_ACCOUNT_CREDS")
 worksheet_key = os.getenv("MOONWATCH_WORKSHEET_KEY")
 
-# Functions setup
 
+"""
+------------------------------------
+GENERAL UTILITIES
+------------------------------------
+"""
 def convertEpochToDate(epoch):
     #timestamp_format = "%Y-%m-%d %H:%m:%S"
     date_format = "%Y-%m-%d"
@@ -36,6 +40,50 @@ def convertEpochToDate(epoch):
     created_at_date = created_at_datetime.strftime(date_format)
     return created_at_date
 
+def checkIfTradingHours():
+    '''
+    Returns a boolean indicating whether current time is within normal stonk trading hours.
+    Not currently being used anywhere but could be useful in the future, so keeping for now
+    '''
+
+    current_time = datetime.now().time()
+    market_open_time = datetime(2021, 1, 1, 13, 30, 0).time() #trading hours in UTC
+    market_close_time = datetime(2021, 1, 1, 20, 2, 0).time()
+    
+    weekday = datetime.today().strftime('%A')
+    if weekday=='Saturday' or weekday=='Sunday':
+        return False
+    elif current_time>market_close_time or current_time<market_open_time:
+        return False
+    else:
+        return True
+        
+"""
+------------------------------------
+SLACK API
+------------------------------------
+"""
+def post_message_to_slack(text, blocks = None):
+    
+    slack_token = os.getenv('SLACK_TOKEN')
+    slack_channel = '#gme_moonwatch'
+    slack_icon_emoji = ':see_no_evil:'
+    slack_user_name = 'moonwatch'
+
+    return requests.post('https://slack.com/api/chat.postMessage', {
+        'token': slack_token,
+        'channel': slack_channel,
+        'text': text,
+        'icon_emoji': slack_icon_emoji,
+        'username': slack_user_name,
+        'blocks': json.dumps(blocks) if blocks else None
+    }).json()
+
+"""
+------------------------------------
+GOOGLE SHEETS API
+------------------------------------
+"""
 def authenticateGoogleSheets():
     '''
     Authenticates GCP Service account using credentials JSON stored in environment variable
@@ -64,25 +112,11 @@ def loadGoogleSheetAsDF(worksheet_key, sheet_index):
     
     return sheet_as_df
 
-def checkIfTradingHours():
-    '''
-    Returns a boolean indicating whether current time is within normal stonk trading hours.
-    Not currently being used anywhere but could be useful in the future, so keeping for now
-    '''
-
-    current_time = datetime.now().time()
-    market_open_time = datetime(2021, 1, 1, 13, 30, 0).time() #trading hours in UTC
-    market_close_time = datetime(2021, 1, 1, 20, 2, 0).time()
-    
-    weekday = datetime.today().strftime('%A')
-    if weekday=='Saturday' or weekday=='Sunday':
-        return False
-    elif current_time>market_close_time or current_time<market_open_time:
-        return False
-    else:
-        return True
-
-
+"""
+------------------------------------
+YAHOO! FINANCE API
+------------------------------------
+"""
 def getStockPrice(ticker):
     '''
     Returns current stock price for this ticker.
@@ -148,22 +182,6 @@ def createSlackMessage(new_data_df,price_change):
 
     return message   
 
-def post_message_to_slack(text, blocks = None):
-    
-    slack_token = os.getenv('SLACK_TOKEN')
-    slack_channel = '#gme_moonwatch'
-    slack_icon_emoji = ':see_no_evil:'
-    slack_user_name = 'moonwatch'
-
-    return requests.post('https://slack.com/api/chat.postMessage', {
-        'token': slack_token,
-        'channel': slack_channel,
-        'text': text,
-        'icon_emoji': slack_icon_emoji,
-        'username': slack_user_name,
-        'blocks': json.dumps(blocks) if blocks else None
-    }).json() 
-  
 def updateStonkxData(ticker):
     '''
     Fetch realtime stock price and post a message in Slack.
@@ -294,6 +312,102 @@ def updateHistoricalData(ticker):
     
     print(f"Historical data for {ticker} updated successfully")
 
+"""
+------------------------------------------------------------------------
+SELENIUM
+------------------------------------------------------------------------
+"""
+def getScreenshot(ticker):
+    '''
+    Given a specific ticker, opens Google search page and grabs a screenshot
+    Returns the filename of the resulting image
+    '''
+
+    CHROMEDRIVER_PATH = os.environ.get('CHROMEDRIVER_PATH', '/usr/local/bin/chromedriver')
+    GOOGLE_CHROME_BIN = os.environ.get('GOOGLE_CHROME_BIN', '/usr/bin/google-chrome')
+    filename = f'{ticker}_screenshot.png'
+
+    options = Options()
+    options.binary_location = GOOGLE_CHROME_BIN
+    options.add_argument('--disable-gpu')
+    options.add_argument('--no-sandbox')
+    options.add_argument("--window-size=1920,1080")
+    options.headless = True
+
+    driver = webdriver.Chrome(executable_path=CHROMEDRIVER_PATH , chrome_options=options)
+    print("WOW the driver works")
+    url = f'https://www.google.com/search?q={ticker}+stock'
+    driver.get(url)
+    print("got the URL. Waiting 2 seconds...")
+    t.sleep(2)
+    print("OK grabbing a screenshot now")
+    driver.save_screenshot(filename)
+    print("Closing the webdriver")
+    driver.close()
+
+    return filename
+
+"""
+------------------------------------------------------------------------
+PYTHON IMAGE LIBRARY
+------------------------------------------------------------------------
+"""
+def cropImage(filename):
+    # Opens a image in RGB mode
+    im = Image.open(filename)
+    # Setting the points for cropped image
+    left = 185
+    top = 350
+    right = 830
+    bottom = 690
+    
+    # Cropped image of above dimension
+    # (It will not change original image)
+    im1 = im.crop((left, top, right, bottom))
+    
+    # Overwrite the file with the new cropped version
+    im1 = im1.save(filename)
+
+"""
+------------------------------------------------------------------------
+IMGUR API
+------------------------------------------------------------------------
+"""
+def uploadFileToImgur(filename):
+    '''
+    Uploads file to imgur and returns the URL where it has been uploaded
+    '''
+    
+    client_id = os.getenv('IMGUR_CLIENT_ID')
+    headers = {"Authorization": f"Client-ID {client_id}"}
+    api_key = os.getenv('IMGUR_CLIENT_ID')
+    url = "https://api.imgur.com/3/upload.json"
+    j1 = requests.post(
+        url, 
+        headers = headers,
+        data = {
+            'key': api_key, 
+            'image': b64encode(open(f'{filename}', 'rb').read()),
+            'type': 'base64',
+            'name': filename,
+            'title': 'GME stomnks (not financial advice)'
+        }
+    )
+    
+    response_json = json.loads(j1.text)
+    try:
+        url_output = response_json['data']['link']
+    except:
+        url_output = None
+
+    return url_output
+
+
+"""
+------------------------------------------------------------------------
+CRAFTING BEAUTIFUL MESSAGES TO DELIVER IN SLACK
+------------------------------------------------------------------------
+"""
 def postEODStatusUpdate(ticker):
     '''
     For a given ticker, post a status update to #gme_moonwatch summarizing the day's trading stats
@@ -374,81 +488,6 @@ def postGoodMorningMessage():
     print("Sending good morning message to Slack")
     post_message_to_slack(greeting_message, blocks = None)
 
-def getScreenshot(ticker):
-    '''
-    Given a specific ticker, opens Google search page and grabs a screenshot
-    Returns the filename of the resulting image
-    '''
-
-    CHROMEDRIVER_PATH = os.environ.get('CHROMEDRIVER_PATH', '/usr/local/bin/chromedriver')
-    GOOGLE_CHROME_BIN = os.environ.get('GOOGLE_CHROME_BIN', '/usr/bin/google-chrome')
-    filename = f'{ticker}_screenshot.png'
-
-    options = Options()
-    options.binary_location = GOOGLE_CHROME_BIN
-    options.add_argument('--disable-gpu')
-    options.add_argument('--no-sandbox')
-    options.add_argument("--window-size=1920,1080")
-    options.headless = True
-
-    driver = webdriver.Chrome(executable_path=CHROMEDRIVER_PATH , chrome_options=options)
-    print("WOW the driver works")
-    url = f'https://www.google.com/search?q={ticker}+stock'
-    driver.get(url)
-    print("got the URL. Waiting 2 seconds...")
-    t.sleep(2)
-    print("OK grabbing a screenshot now")
-    driver.save_screenshot(filename)
-    print("Closing the webdriver")
-    driver.close()
-
-    return filename
-
-def cropImage(filename):
-    # Opens a image in RGB mode
-    im = Image.open(filename)
-    # Setting the points for cropped image
-    left = 185
-    top = 350
-    right = 830
-    bottom = 690
-    
-    # Cropped image of above dimension
-    # (It will not change original image)
-    im1 = im.crop((left, top, right, bottom))
-    
-    # Overwrite the file with the new cropped version
-    im1 = im1.save(filename)
-
-
-def uploadFileToImgur(filename):
-    '''
-    Uploads file to imgur and returns the URL where it has been uploaded
-    '''
-    
-    client_id = os.getenv('IMGUR_CLIENT_ID')
-    headers = {"Authorization": f"Client-ID {client_id}"}
-    api_key = os.getenv('IMGUR_CLIENT_ID')
-    url = "https://api.imgur.com/3/upload.json"
-    j1 = requests.post(
-        url, 
-        headers = headers,
-        data = {
-            'key': api_key, 
-            'image': b64encode(open(f'{filename}', 'rb').read()),
-            'type': 'base64',
-            'name': filename,
-            'title': 'GME stomnks (not financial advice)'
-        }
-    )
-    
-    response_json = json.loads(j1.text)
-    try:
-        url_output = response_json['data']['link']
-    except:
-        url_output = None
-
-    return url_output
 
 def postTrendImage(ticker):
 
@@ -469,42 +508,3 @@ def postTrendImage(ticker):
             print(f"Imgur upload failed :(")
     else:
         print("We are outside trading hours - chill")
-
-def main():
-
-    # Uncomment to run tasks manually on re-deploy (aka testing in prod lol)
-    #postEODStatusUpdate('GME')
-    #updateHistoricalData('GME')
-    #postGoodMorningMessage()
-    #postTrendImage('GME')
-    tw.tweetMessage('Not another test tweet! sry yall')
-
-    # Set up scheduler tasks
-    scheduler = BackgroundScheduler(executors=executors)
-    # Price update with uplifting emoji every half hour during trading hours
-    scheduler.add_job(updateStonkxData, CronTrigger.from_crontab('*/30 * * * *'), args=["GME"])
-    # Update historical data & provide EOD summary after market close
-    scheduler.add_job(updateHistoricalData, CronTrigger.from_crontab('2 20 * * *'), args=["GME"])
-    scheduler.add_job(postEODStatusUpdate, CronTrigger.from_crontab('5 20 * * *'), args=["GME"])
-    # Post full trend and metrics at midday and market close
-    scheduler.add_job(postTrendImage, CronTrigger.from_crontab('0 17 * * *'), args=["GME"]) 
-    scheduler.add_job(postTrendImage, CronTrigger.from_crontab('5 20 * * *'), args=["GME"]) 
-    # GOOD MUORNEEENG!!!
-    scheduler.add_job(postGoodMorningMessage, CronTrigger.from_crontab('25 13 * * *'), args=None)
-
-    # Let 'er rip
-    scheduler.start()
-
-    try:
-        # This is here to simulate application activity (which keeps the main thread alive).
-        while True:
-            t.sleep(2)
-
-    except (KeyboardInterrupt, SystemExit):
-        scheduler.shutdown() 
-
-if __name__ == "__main__":
-    main()  
-
-
-
