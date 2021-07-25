@@ -99,7 +99,7 @@ def retweetMostRecent(screen_name):
     tweet_json = json.loads(json_str)
 
     # Only retweet if there have already been at least 200 retweets
-    if tweet_json['retweet_count']<200:
+    if tweet_json['retweet_count']<50:
         print("Not enough retweets - BORING.")
         return
     else:
@@ -117,6 +117,8 @@ def retweetHighEngagementTweet(query):
     This function runs periodically to look for a high-engagement tweet containing the search query.
     It will retweet the top result that we have not already retweeted.
     '''
+
+    print(f"Executing retweetHighEngagementTweet({query})...")
 
     # Authenticate
     api = twitterAuthenticate()

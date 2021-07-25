@@ -17,7 +17,8 @@ def main():
     # Uncomment to run tasks manually on re-deploy (aka testing in prod lol)
     # tw.tweetMostRecentPrice('GME')
     # tw.retweetMostRecent('ryancohen')
-    tw.retweetHighEngagementTweet('#GME')
+    tw.retweetMostRecent('GameStop')
+    # tw.retweetHighEngagementTweet('#GME')
 
     # Set up scheduler tasks
     scheduler = BackgroundScheduler(executors=executors)
