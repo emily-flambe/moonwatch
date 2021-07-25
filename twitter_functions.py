@@ -140,18 +140,16 @@ def retweetHighEngagementTweet(query):
     
     # Get the set of tweets that have high enough engagement for us to want to retweet
     high_engagement_tweets = [x for x in GME_tweets_list 
-                              if x['in_reply_to_status_id'] == None 
-                              # More lenient criterion for testing:
-                              and x['favorite_count']>1
-                              # WHEN RUNNING FOR REAL (so we aren't retweeting too much!):
-                              #and x['retweet_count']>100 
+                              if x['in_reply_to_status_id'] == None
+                              and x['favorite_count']>10
+                              and x['retweet_count']>10 
                               and 'retweeted_status' not in x.keys()
                               and x not in my_tweet_ids]
     
     # If there are any recent tweets with high enough engagement, retweet the one with the most "likes"
     if len(high_engagement_tweets)>0:
         # From the resulting dataframe, isolate the tweet id of the most retweeted high-engagement tweet
-        top_tweet = pd.DataFrame(high_engagement_tweets).sort_values('favorite_count',ascending=False).reset_index().loc[0:0]
+        top_tweet = pd.DataFrame(high_engagement_tweets).sort_values('retweet_count',ascending=False).reset_index().loc[0:0]
         tweet_id_to_retweet = top_tweet['id'][0]
         try:
             api.retweet(tweet_id_to_retweet)

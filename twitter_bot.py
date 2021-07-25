@@ -14,18 +14,17 @@ executors = {
 
 def main():
 
-    # Uncomment to run tasks manually on re-deploy (aka testing in prod lol)
-    # tw.tweetMostRecentPrice('GME')
-    # tw.retweetMostRecent('ryancohen')
-    # tw.retweetMostRecent('GameStop')
-    # tw.retweetHighEngagementTweet('#GME')
-
     # Set up scheduler tasks
     scheduler = BackgroundScheduler(executors=executors)
+    # Tweet price updates every half hour (trading hours only)
     scheduler.add_job(tw.tweetMostRecentPrice, CronTrigger.from_crontab('1 * * * *'), args=['GME'])
-    #scheduler.add_job(tw.retweetMostRecent, 'interval', seconds=300, args=['ryancohen'])
-    scheduler.add_job(tw.retweetHighEngagementTweet, 'interval', seconds=900, args=['#GME'])
+    scheduler.add_job(tw.tweetMostRecentPrice, CronTrigger.from_crontab('31 * * * *'), args=['GME'])
 
+    # Scan for high-engagement tweets every 15 minutes
+    scheduler.add_job(tw.retweetHighEngagementTweet, CronTrigger.from_crontab('5 * * * *'), args=['#GME'])
+    scheduler.add_job(tw.retweetHighEngagementTweet, CronTrigger.from_crontab('20 * * * *'), args=['#MOASS'])
+    scheduler.add_job(tw.retweetHighEngagementTweet, CronTrigger.from_crontab('35 * * * *'), args=['#gme'])
+    scheduler.add_job(tw.retweetHighEngagementTweet, CronTrigger.from_crontab('50 * * * *'), args=['#moass'])
 
     # Let 'er rip
     scheduler.start()
