@@ -132,7 +132,7 @@ def retweetHighEngagementTweet(query):
     
     # Get recent tweets with hashtag #GME
     GME_tweets_list = []
-    for page in tweepy.Cursor(api.search, q=query, count=1).pages():
+    for page in tweepy.Cursor(api.search, q=query, count=5).pages():
         tweets_in_this_page = convertTweetResponseToDictList(page)
         GME_tweets_list.append(tweets_in_this_page)
         
