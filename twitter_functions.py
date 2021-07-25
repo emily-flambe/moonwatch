@@ -120,7 +120,7 @@ def retweetHighEngagementTweet(query):
     It will retweet the top result that we have not already retweeted.
     '''
 
-    print(f"Executing retweetHighEngagementTweet({query})...")
+    print(f"Executing retweetHighEngagementTweet('{query}')...")
 
     # Authenticate
     api = twitterAuthenticate()
@@ -138,23 +138,28 @@ def retweetHighEngagementTweet(query):
         
     GME_tweets_list = list(itertools.chain.from_iterable(GME_tweets_list))     
     
-    # Get the set of tweets that have at least 500 retweets and I have not already retweeted
+    # Get the set of tweets that have high enough engagement for us to want to retweet
     high_engagement_tweets = [x for x in GME_tweets_list 
                               if x['in_reply_to_status_id'] == None 
-                              and x['retweet_count']>100
+                              # More lenient criterion for testing:
+                              and x['favorite_count']>1
+                              # WHEN RUNNING FOR REAL (so we aren't retweeting too much!):
+                              #and x['retweet_count']>100 
                               and 'retweeted_status' not in x.keys()
                               and x not in my_tweet_ids]
     
-    # From the resulting dataframe, isolate the tweet id of the most retweeted high-engagement tweet
-    top_tweet = pd.DataFrame(high_engagement_tweets).sort_values('retweet_count',ascending=False).reset_index().loc[0:0]
-    tweet_id_to_retweet = top_tweet['id'][0]
-    
-    # Retweet that tweet
-    try:
-        api.retweet(tweet_id_to_retweet)
-        print(f"Successfully retweeted a high-engagement tweet (id {tweet_id_to_retweet})")
-    except:
-        print("Retweet failed") 
+    # If there are any recent tweets with high enough engagement, retweet the one with the most "likes"
+    if len(high_engagement_tweets)>0:
+        # From the resulting dataframe, isolate the tweet id of the most retweeted high-engagement tweet
+        top_tweet = pd.DataFrame(high_engagement_tweets).sort_values('favorite_count',ascending=False).reset_index().loc[0:0]
+        tweet_id_to_retweet = top_tweet['id'][0]
+        try:
+            api.retweet(tweet_id_to_retweet)
+            print(f"Successfully retweeted a high-engagement tweet (id {tweet_id_to_retweet})")
+        except:
+            print("Retweet failed") 
+    else:
+        print("No recent tweets are good enough to retweet. Oh well")
 
 """
 def tweetImage(message,image_url):
