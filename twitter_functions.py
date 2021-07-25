@@ -130,7 +130,7 @@ def retweetHighEngagementTweet(query):
     
     # Get recent tweets with hashtag #GME
     GME_tweets_list = []
-    for page in tweepy.Cursor(api.search, q=query, count=2).pages():
+    for page in tweepy.Cursor(api.search, q=query, count=1).pages():
         tweets_in_this_page = convertTweetResponseToDictList(page)
         GME_tweets_list.append(tweets_in_this_page)
         
@@ -139,8 +139,7 @@ def retweetHighEngagementTweet(query):
     # Get the set of tweets that have at least 500 retweets and I have not already retweeted
     high_engagement_tweets = [x for x in GME_tweets_list 
                               if x['in_reply_to_status_id'] == None 
-                              and x['favorite_count']>1
-                              and x['retweet_count']>1
+                              and x['retweet_count']>100
                               and 'retweeted_status' not in x.keys()
                               and x not in my_tweet_ids]
     
