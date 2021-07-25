@@ -37,7 +37,16 @@ def twitterAuthenticate():
     api = tweepy.API(auth)
     
     return api
- 
+
+def convertTweetResponseToDictList(tweetResponse):
+    output_list = []
+    for i in range(len(tweetResponse)):
+        tweet_object = tweetResponse[i]
+        json_str = json.dumps(tweet_object._json)
+        tweet_json = json.loads(json_str)
+        output_list.append(tweet_json)
+    return output_list
+
 def tweetMessage(message):
     '''    
     input: message content to send in tweet
@@ -108,7 +117,7 @@ def retweetHighEngagementTweet(query):
     This function runs periodically to look for a high-engagement tweet containing the search query.
     It will retweet the top result that we have not already retweeted.
     '''
-    
+
     # Authenticate
     api = twitterAuthenticate()
 
