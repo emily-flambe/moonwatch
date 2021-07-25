@@ -101,8 +101,45 @@ def retweetMostRecent(screen_name):
             print("Retweet successful")
         except:
             print("Retweet failed (probably already retweeted it, dummy)")
-            
 
+
+def retweetHighEngagementTweet(query):
+    '''
+    This function runs periodically to look for a high-engagement tweet containing the search query.
+    It will retweet the top result that we have not already retweeted.
+    '''
+    # Get list of all my tweets
+    tweets = api.user_timeline(screen_name='MoonWatch_',count=1000,include_rts = True,tweet_mode = 'compat')
+    my_tweet_list = convertTweetResponseToDictList(tweets)
+    my_tweet_ids = [x['id'] for x in my_tweet_list]
+    
+    # Get recent tweets with hashtag #GME
+    GME_tweets_list = []
+    for page in tweepy.Cursor(api.search, q=query, count=5).pages():
+        tweets_in_this_page = convertTweetResponseToDictList(page)
+        GME_tweets_list.append(tweets_in_this_page)
+        
+    GME_tweets_list = list(itertools.chain.from_iterable(GME_tweets_list))     
+    
+    # Get the set of tweets that have at least 500 retweets and I have not already retweeted
+    high_engagement_tweets = [x for x in GME_tweets_list 
+                              if x['in_reply_to_status_id'] == None 
+                              and x['favorite_count']>1
+                              and x['retweet_count']>1
+                              and 'retweeted_status' not in x.keys()
+                              and x not in my_tweet_ids]
+    
+    # From the resulting dataframe, isolate the tweet id of the most retweeted high-engagement tweet
+    top_tweet = pd.DataFrame(high_engagement_tweets).sort_values('retweet_count',ascending=False).reset_index().loc[0:0]
+    tweet_id_to_retweet = top_tweet['id'][0]
+    
+    # Retweet that tweet
+    try:
+        api.retweet(tweet_id_to_retweet)
+        print(f"Successfully retweeted a high-engagement tweet (id {tweet_id_to_retweet})")
+    except:
+        print("Retweet failed") 
+        
 """
 def tweetImage(message,image_url):
     '''    
