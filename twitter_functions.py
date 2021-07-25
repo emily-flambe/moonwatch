@@ -108,6 +108,10 @@ def retweetHighEngagementTweet(query):
     This function runs periodically to look for a high-engagement tweet containing the search query.
     It will retweet the top result that we have not already retweeted.
     '''
+    
+    # Authenticate
+    api = twitterAuthenticate()
+
     # Get list of all my tweets
     tweets = api.user_timeline(screen_name='MoonWatch_',count=1000,include_rts = True,tweet_mode = 'compat')
     my_tweet_list = convertTweetResponseToDictList(tweets)
@@ -139,7 +143,7 @@ def retweetHighEngagementTweet(query):
         print(f"Successfully retweeted a high-engagement tweet (id {tweet_id_to_retweet})")
     except:
         print("Retweet failed") 
-        
+
 """
 def tweetImage(message,image_url):
     '''    
