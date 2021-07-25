@@ -18,7 +18,7 @@ def main():
     # tw.tweetMostRecentPrice('GME')
     # tw.retweetMostRecent('ryancohen')
     # tw.retweetMostRecent('GameStop')
-    tw.retweetHighEngagementTweet('#GME')
+    # tw.retweetHighEngagementTweet('#GME')
 
     # Set up scheduler tasks
     scheduler = BackgroundScheduler(executors=executors)
