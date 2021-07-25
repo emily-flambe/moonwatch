@@ -475,8 +475,12 @@ def postEODStatusUpdate(ticker):
     '''
     
     # Update slack!    
-    print("Sending EOD summary message to Slack")
-    post_message_to_slack(EOD_summary_message, blocks = None)
+
+    if checkIfTradingHours():
+        print("Sending EOD summary message to Slack")
+        post_message_to_slack(EOD_summary_message, blocks = None)
+    else:
+        return
 
 def postGoodMorningMessage():
     '''
@@ -496,8 +500,11 @@ def postGoodMorningMessage():
     '''
     
     # Update slack!    
-    print("Sending good morning message to Slack")
-    post_message_to_slack(greeting_message, blocks = None)
+    if checkIfTradingHours():
+        print("Sending good morning message to Slack")
+        post_message_to_slack(greeting_message, blocks = None)
+    else:
+        return
 
 
 def postTrendImage(ticker):
