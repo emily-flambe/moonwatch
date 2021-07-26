@@ -3,6 +3,7 @@ import json
 import os
 import pandas as pd
 import tweepy
+from datetime import date, datetime, timedelta, time
 
 import moonwatch_utils as moon
 
@@ -190,3 +191,62 @@ def tweetTrendImage(ticker):
             print("Trend image failed to tweet :(")
     else:
         print("We are outside trading hours - chill")
+
+
+
+def tweetEODSummary(ticker):
+    '''
+    For a given ticker, tweet a summary of the day's trading stats
+    This will be scheduled to run at the end of every trading day
+    '''
+
+    # Authenticate Twitter
+    api = twitterAuthenticate()
+    
+    # Load the worksheet as a dataframe
+    worksheet_key = os.getenv("MOONWATCH_WORKSHEET_KEY")
+    sheet_index = int(os.environ['HISTORICAL_DATA_SHEET_INDEX'])
+    summary_df = moon.loadGoogleSheetAsDF(worksheet_key, sheet_index)
+        
+    # Filter summary to selected ticker & today's date
+    today = str(date.today())
+    today_summary = summary_df[(summary_df['Date']==today) & (summary_df['Ticker']==ticker)].reset_index() #reset index so that [0] always works
+    
+    # Extract metrics from the summary table
+    trading_open = round(today_summary['open'][0],2)
+    trading_close = round(today_summary['close'][0],2)
+    trading_volume = today_summary['volume'][0]
+    trading_volume_rank = today_summary['volume_rank'][0]
+    
+    trading_intraday_delta = today_summary['Intraday Price Change (Dollars)'][0]
+    trading_intraday_delta_pct = today_summary['Intraday Price Change (Percentage)'][0]
+    trading_intraday_delta_pct = str(round(trading_intraday_delta_pct*100,1))+"%"
+    trading_close_vs_prior_day_pct = today_summary['Closing Price Delta from Prior Day (Percentage)'][0]
+    trading_close_vs_prior_day_pct = str(round(trading_close_vs_prior_day_pct*100,1))+"%"
+    
+    if trading_intraday_delta>0:
+        trading_intraday_delta_direction='Up'
+    else:
+        trading_intraday_delta_direction='Down'
+        
+    # Craft a beautiful and helpful Slack message
+    EOD_summary_message = f'''
+    Hello apes! What a day it has been!!!
+    
+    Today ({today}), $GME opened at ${trading_open} and closed at ${trading_close} ({trading_intraday_delta_direction} {trading_intraday_delta_pct} from open)
+
+    Today's trading volume: {trading_volume} (rank #{trading_volume_rank} across the past year of trading)
+    
+    Don't forget to #HODL! #GME #MOASS #Apestrong
+    '''
+    
+    # Tweet the EOD summary    
+    if moon.checkIfTradingHours():
+        response = api.update_status(status=EOD_summary_message)
+        if response.text:
+            print(f"Successfully tweeted EOD summary")
+        else: 
+            print("Something went wrong, EOD summary failed to tweet :()") 
+    else:
+        print("No EOD summary on non-trading days!") 
+        return
