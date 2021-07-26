@@ -11,7 +11,12 @@ import moonwatch_utils as moon
 emoji = {
     "rocket":"\U0001F680", #need to use wide escape for 1F unicode. Don't ask me what THAT means though
     "blush":"\u263A",
-    "joy":"\U0001F602"
+    "joy":"\U0001F602",
+    "gorilla":"\U0001F98D",
+    "banana":"\U0001F34C",
+    "gem":"\U0001F48E",
+    "raised_hands":"\U0001F64C",
+    "huffy":"\U0001F624"
 }
 
 def test_function():
@@ -49,39 +54,27 @@ def convertTweetResponseToDictList(tweetResponse):
         output_list.append(tweet_json)
     return output_list
 
-def tweetMessage(message):
-    '''    
-    input: message content to send in tweet
-    output: posts the tweet
-    '''
-    
-    # Authenticate Twitter API
-    api = twitterAuthenticate()
-    
-    # Post tweet
-    print("Tweeting!")
-    try:
-        response = api.update_status(status=message)
-        if response.text:
-            print("Tweet successful")
-        else: 
-            print("Something went wrong :()")   
-    except:
-        print("Tweet failed, it's probably fine, there are better things to worry about")
-
-
 def tweetMostRecentPrice(ticker):
+
+    # Authenticate Twitter
+    api = twitterAuthenticate()
 
     # Get most recent price from the google sheet (function in moonwatch_utils module)
     price = moon.getMostRecentPriceFromSheet(ticker)
+    emoji_for_tweet = emoji['rocket']
 
     # Craft the tweet, filling in emoji unicode from dict (top of this file)
-    message = f"""$GME ${price} {emoji['rocket']} #GME #wow #moon #HODL #Apestrong """
+    message = f"""$GME ${price} {emoji_for_tweet} #GME #wow #moon #HODL #Apestrong """
 
     # Send the tweet (if during trading hours)
 
     if moon.checkIfTradingHours():
-        tweetMessage(message)
+        response = api.update_status(status=message)
+        if response.text:
+            print(f"Successfully tweeted: {message}")
+        else: 
+            print("Something went wrong :()") 
+
     else:
         print("We are outside trading hours... dont tweet, it will scare the children")
 

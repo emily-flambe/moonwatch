@@ -14,8 +14,8 @@ def main():
     #postEODStatusUpdate('GME')
     #updateHistoricalData('GME')
     #postTrendImage('GME')
-    moon.postGoodMorningMessage()
-    moon.updateStonkxData('GME')
+    #moon.postGoodMorningMessage()
+    #moon.updateStonkxData('GME')
 
     # Set up scheduler tasks
     scheduler = BackgroundScheduler(executors=executors)
