@@ -1,5 +1,6 @@
 import itertools
 import json
+from moonwatch.moonwatch import checkIfTradingHours
 import os
 import pandas as pd
 import tweepy
@@ -138,11 +139,17 @@ def retweetHighEngagementTweet(query):
         
     GME_tweets_list = list(itertools.chain.from_iterable(GME_tweets_list))     
     
+    # Use stricter limits for retweeting during business hours
+    if checkIfTradingHours():
+        minimum_engagement = 100
+    else:
+        minimum_engagement = 10        
+
     # Get the set of tweets that have high enough engagement for us to want to retweet
     high_engagement_tweets = [x for x in GME_tweets_list 
                               if x['in_reply_to_status_id'] == None
-                              and x['favorite_count']>10
-                              and x['retweet_count']>10 
+                              and x['favorite_count'] > minimum_engagement
+                              and x['retweet_count'] > minimum_engagement 
                               and 'retweeted_status' not in x.keys()
                               and x not in my_tweet_ids]
     
