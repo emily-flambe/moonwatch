@@ -12,7 +12,7 @@ def main():
 
     # Uncomment to run tasks manually on re-deploy (aka testing in prod lol)
     #postEODStatusUpdate('GME')
-    #updateHistoricalData('GME')
+    moon.updateHistoricalData('GME')
     #postTrendImage('GME')
     #moon.postGoodMorningMessage()
     #moon.updateStonkxData('GME')
