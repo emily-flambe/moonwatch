@@ -178,17 +178,14 @@ def tweetTrendImage(ticker):
         filename = moon.getScreenshot(ticker)
 
         # Crop the screenshot to show only the cute trend chart
-        print(f"Screenshot saved: {filename}. Cropping image and uploading to Imgur...")
+        print(f"Screenshot saved: {filename}. Cropping image and uploading to Twitter...")
         moon.cropImage(filename)
         try:
             media = api.media_upload(filename)
             tweet = f"Your regularly scheduled update {emoji['rocket']}"
             response = api.update_status(status=tweet, media_ids=[media.media_id])
-            if response.text():
-                print("Trend image tweeted successfully")
-            else:
-                print("Trend image failed to tweet :(")
+            print("Trend image tweeted successfully")
         except: 
-            print("Something went wrong :()")  
+            print("Trend image failed to tweet :(")
     else:
         print("We are outside trading hours - chill")

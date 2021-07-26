@@ -14,11 +14,9 @@ executors = {
 
 def main():
 
-    tw.tweetTrendImage('GME')
-
     # Set up scheduler tasks
     scheduler = BackgroundScheduler(executors=executors)
-    
+
     # Tweet price updates every half hour (trading hours only)
     scheduler.add_job(tw.tweetMostRecentPrice, CronTrigger.from_crontab('1 * * * *'), args=['GME'])
     scheduler.add_job(tw.tweetMostRecentPrice, CronTrigger.from_crontab('31 * * * *'), args=['GME'])
