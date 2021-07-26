@@ -1,6 +1,5 @@
 import itertools
 import json
-from moonwatch.moonwatch import checkIfTradingHours
 import os
 import pandas as pd
 import tweepy
@@ -140,7 +139,7 @@ def retweetHighEngagementTweet(query):
     GME_tweets_list = list(itertools.chain.from_iterable(GME_tweets_list))     
     
     # Use stricter limits for retweeting during business hours
-    if checkIfTradingHours():
+    if moon.checkIfTradingHours():
         minimum_engagement = 100
     else:
         minimum_engagement = 10        
@@ -173,7 +172,7 @@ def tweetTrendImage(ticker):
     # Authenticate Twitter
     api = twitterAuthenticate()
 
-    if checkIfTradingHours():
+    if moon.checkIfTradingHours():
         # Use Selenium to save a screenshot
         print("Using Selenium to fetch a screenshot")
         filename = moon.getScreenshot(ticker)
