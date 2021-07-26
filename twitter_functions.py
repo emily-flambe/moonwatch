@@ -157,9 +157,17 @@ def retweetHighEngagementTweet(query):
         # From the resulting dataframe, isolate the tweet id of the most retweeted high-engagement tweet
         top_tweet = pd.DataFrame(high_engagement_tweets).sort_values('retweet_count',ascending=False).reset_index().loc[0:0]
         tweet_id_to_retweet = top_tweet['id'][0]
+
+        user_id = my_tweet_list[0]['user']['id']
+
         try:
             api.retweet(tweet_id_to_retweet)
             print(f"Successfully retweeted a high-engagement tweet (id {tweet_id_to_retweet})")
+            try: #Follow the account that posted the tweet we are retweeting
+                api.create_friendship(user_id)
+                print(f"Successfully followed user {user_id}")
+            except:
+                print("Follow failed (probably already following this account)")
         except:
             print("Retweet failed") 
     else:

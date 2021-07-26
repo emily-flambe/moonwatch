@@ -280,6 +280,17 @@ def updateHistoricalData(ticker):
     historical_data_df = historical_data_df.drop(['timestamp_epoch'],axis=1)
     historical_data_df['Ticker'] = ticker
 
+    # Calculate the rank and percentile of the trading volume for each day, considering the past 52 weeks of data
+    daily_volumes = historical_data_df[['Date','volume']].sort_values('volume')
+    #daily_volume_rank_p52w = daily_volumes.groupby().cumcount()
+    daily_volumes = daily_volumes.reset_index().reset_index()
+    daily_volumes = daily_volumes.rename(columns={"level_0":"volume_rank"})
+    daily_volumes['volume_rank'] = daily_volumes['volume_rank']+1
+    daily_volumes['volume_percentile'] = daily_volumes['volume_rank']/len(daily_volumes)
+
+    daily_volume_ranks_and_percentiles = daily_volumes[['Date','volume_rank','volume_percentile']]
+    historical_data_df = historical_data_df.merge(daily_volume_ranks_and_percentiles,how='inner',on='Date')
+
     # Add rownums partitioned by ticker. We will use these to get prior day stats
     rownum = historical_data_df.groupby(['Ticker']).cumcount()
     historical_data_df['rownum'] = [x for x in rownum]
