@@ -123,7 +123,7 @@ def retweetHighEngagementTweet(query):
 
     print(f"Executing retweetHighEngagementTweet('{query}')...")
 
-    # Authenticate
+    # Authenticate Twitter
     api = twitterAuthenticate()
 
     # Get list of all my tweets
@@ -166,27 +166,30 @@ def retweetHighEngagementTweet(query):
     else:
         print("No recent tweets are good enough to retweet. Oh well")
 
-"""
-def tweetImage(message,image_url):
-    '''    
-    input: message content to send in tweet
-    output: posts the tweet
-    '''
-    
-    api = twitterAuthenticate()
-    
-    # Upload image to Twitter
-    print(f"uploading {image_url} to Twitterspace")
-    image_url
-    
-    media = api.media_upload(tweet_image_path)
-    
-    # Post tweet with image
-    print("Tweeting!")
-    response = api.update_status(status=tweet, media_ids=[media.media_id])
-    if response.text:
-        print("Tweet successful")
-    else: 
-        print("Something went wrong :()")   
 
-"""
+
+def tweetTrendImage(ticker):
+
+    # Authenticate Twitter
+    api = twitterAuthenticate()
+
+    if checkIfTradingHours():
+        # Use Selenium to save a screenshot
+        print("Using Selenium to fetch a screenshot")
+        filename = moon.getScreenshot(ticker)
+
+        # Crop the screenshot to show only the cute trend chart
+        print(f"Screenshot saved: {filename}. Cropping image and uploading to Imgur...")
+        moon.cropImage(filename)
+        try:
+            media = api.media_upload(filename)
+            tweet = f"Your regularly scheduled update {emoji['rocket']}"
+            response = api.update_status(status=tweet, media_ids=[media.media_id])
+            if response.text():
+                print("Trend image tweeted successfully")
+            else:
+                print("Trend image failed to tweet :(")
+        except: 
+            print("Something went wrong :()")  
+    else:
+        print("We are outside trading hours - chill")
