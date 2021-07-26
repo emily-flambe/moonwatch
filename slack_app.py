@@ -13,8 +13,9 @@ def main():
     # Uncomment to run tasks manually on re-deploy (aka testing in prod lol)
     #postEODStatusUpdate('GME')
     #updateHistoricalData('GME')
-    #postGoodMorningMessage()
     #postTrendImage('GME')
+    moon.postGoodMorningMessage()
+    moon.updateStonkxData('GME')
 
     # Set up scheduler tasks
     scheduler = BackgroundScheduler(executors=executors)

@@ -116,7 +116,7 @@ def getMostRecentPriceFromSheet(ticker):
 
     # Get prices dataframe
     # Load the worksheet as a dataframe
-    sheet_index = os.environ['ALL_PRICES_SHEET_INDEX']
+    sheet_index = int(os.environ['ALL_PRICES_SHEET_INDEX'])
     all_prices_df = loadGoogleSheetAsDF(worksheet_key, sheet_index).sort_values(by=['Timestamp'])
     all_prices_df = all_prices_df[all_prices_df['Ticker']==ticker]
     most_recent_price_df = all_prices_df.sort_values('Timestamp',ascending=False).reset_index().loc[0:0][['Timestamp','Price']]
@@ -214,7 +214,7 @@ def updateStonkxData(ticker):
         # Fetch data from the existing sheet and compare our new dataframe with the most recent row in the Gsheet
 
         # Load the worksheet as a dataframe
-        sheet_index = os.environ['ALL_PRICES_SHEET_INDEX']
+        sheet_index = int(os.environ['ALL_PRICES_SHEET_INDEX'])
         sheet_as_df = loadGoogleSheetAsDF(worksheet_key, sheet_index).sort_values(by=['Timestamp'])
 
         # Filter to rows for specific ticker
@@ -315,7 +315,7 @@ def updateHistoricalData(ticker):
     historical_data_df['Closing Price Delta from Prior Day (Percentage)'] = [(historical_data_df['close'][i]/historical_data_df['close prior day'][i])-1 for i in range(len(historical_data_df['close']))] 
 
     # update the Google Sheets worksheet
-    sheet_index = os.environ['HISTORICAL_DATA_SHEET_INDEX']
+    sheet_index = int(os.environ['HISTORICAL_DATA_SHEET_INDEX'])
     gc = authenticateGoogleSheets()
     sh = gc.open_by_key(worksheet_key)
     historical_data_worksheet = sh.get_worksheet(sheet_index)
@@ -427,7 +427,7 @@ def postEODStatusUpdate(ticker):
     
     # Load the worksheet as a dataframe
 
-    sheet_index = os.environ['HISTORICAL_DATA_SHEET_INDEX']
+    sheet_index = int(os.environ['HISTORICAL_DATA_SHEET_INDEX'])
     summary_df = loadGoogleSheetAsDF(worksheet_key, sheet_index)
         
     # Filter summary to selected ticker & today's date
