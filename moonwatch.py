@@ -71,8 +71,8 @@ def checkIfTradingHours():
     '''
 
     current_time = datetime.now().time()
-    market_open_time = datetime(2021, 1, 1, 13, 30, 0).time() #trading hours in UTC
-    market_close_time = datetime(2021, 1, 1, 20, 2, 0).time()
+    market_open_time = datetime(2021, 1, 1, 14, 30, 0).time() #trading hours in UTC
+    market_close_time = datetime(2021, 1, 1, 21, 2, 0).time()
     
     weekday = datetime.today().strftime('%A')
     if weekday=='Saturday' or weekday=='Sunday':
