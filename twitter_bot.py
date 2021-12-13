@@ -25,10 +25,10 @@ def main():
 
     # Post full trend and metrics at midday and market close
     scheduler.add_job(tw.tweetTrendImage, CronTrigger.from_crontab('0 17 * * *'), args=["GME"]) 
-    scheduler.add_job(tw.tweetTrendImage, CronTrigger.from_crontab('6 20 * * *'), args=["GME"]) 
+    scheduler.add_job(tw.tweetTrendImage, CronTrigger.from_crontab('6 21 * * *'), args=["GME"]) 
 
     # Post summary at EOD
-    scheduler.add_job(tw.tweetEODSummary, CronTrigger.from_crontab('5 20 * * *'), args=["GME"]) 
+    scheduler.add_job(tw.tweetEODSummary, CronTrigger.from_crontab('5 21 * * *'), args=["GME"]) 
 
     # Scan for high-engagement tweets every 15 minutes
     scheduler.add_job(tw.retweetHighEngagementTweet, CronTrigger.from_crontab('5 * * * *'), args=['#GME'])
